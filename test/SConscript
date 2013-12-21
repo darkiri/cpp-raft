@@ -1,0 +1,14 @@
+Import('env')
+
+PhonyTargets(env, gtest_svn = 'svn checkout http://googletest.googlecode.com/svn/trunk/ gtest')
+
+env.StaticObject("gtest-all.o",
+                 "#gtest/src/gtest-all.cc",
+                 CPPPATH = [ "#gtest", "#gtest/include" ],
+                 CPPFLAGS = [ "-g", "-DDEBUG" ],
+                 CXXFLAGS = "-std=c++0x")
+
+env.Program("test", 
+        source = (["TestRunner.cpp", "gtest-all.o"]), 
+        LIBS = ["pthread"],
+        CPPPATH = ["#gtest/include"])

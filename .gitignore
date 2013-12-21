@@ -1,0 +1,4 @@
+gtest
+build
+.sconsign.*
+*.swp
