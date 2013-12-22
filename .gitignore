@@ -2,3 +2,4 @@ gtest
 build
 .sconsign.*
 *.swp
+*.pyc
