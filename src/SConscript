@@ -1,13 +1,13 @@
 Import('env')
 
-env.StaticObject("raft.o",
-                 "#src/node.cpp",
-                 CPPPATH = [],
-                 CPPFLAGS = [ "-g", "-DDEBUG" ],
-                 CXXFLAGS = "-std=c++11")
+raft_o = env.StaticObject(
+        ["node.cpp", "log.cpp"],
+        CPPPATH = [],
+        CPPFLAGS = [ "-g", "-DDEBUG" ],
+        CXXFLAGS = "-std=c++11")
 
 env.StaticLibrary("raft", 
-        source = "raft.o", 
+        source = raft_o, 
         CPPPATH = [],
         CPPFLAGS = [ "-g", "-DDEBUG" ],
         CXXFLAGS = "-std=c++11")

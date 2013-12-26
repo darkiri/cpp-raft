@@ -3,13 +3,15 @@ Import('env')
 PhonyTargets(env, gtest_svn = 'svn checkout http://googletest.googlecode.com/svn/trunk/ gtest')
 
 env.StaticObject("gtest-all.o",
-                 "#gtest/src/gtest-all.cc",
-                 CPPPATH = [ "#gtest", "#gtest/include" ],
-                 CPPFLAGS = [ "-g", "-DDEBUG" ],
-                 CXXFLAGS = "-std=c++0x")
+        "#gtest/src/gtest-all.cc",
+        CPPPATH = [ "#gtest", "#gtest/include" ],
+        CPPFLAGS = [ "-g", "-DDEBUG" ],
+        CXXFLAGS = "-std=c++0x")
 
 env.Program("test", 
         source = (["test_runner.cpp", "node_tests.cpp", "gtest-all.o"]), 
         LIBS = ["pthread", "raft"],
         LIBPATH = ["#build/raft"],
-        CPPPATH = ["#gtest/include", "#src"])
+        CPPPATH = ["#gtest/include", "#src"],
+        CPPFLAGS = [ "-g", "-DDEBUG" ],
+        CXXFLAGS = "-std=c++11")
