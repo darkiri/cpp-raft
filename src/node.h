@@ -3,9 +3,9 @@
 
 namespace raft {
     enum NodeState {
-        Follower = 0,
-        Candidate = 1,
-        Leader = 2
+        FOLLOWER = 0,
+        CANDIDATE = 1,
+        LEADER = 2
     };
 
     class Node {

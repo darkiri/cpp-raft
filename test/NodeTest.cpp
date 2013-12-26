@@ -16,6 +16,6 @@ namespace raft {
 
     TEST_F(NodeTest, New_Node_Is_Follower) {
         Node node;
-        EXPECT_EQ(Follower, node.GetState());
+        EXPECT_EQ(FOLLOWER, node.GetState());
     }
 }
