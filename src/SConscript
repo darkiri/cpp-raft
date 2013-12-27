@@ -6,8 +6,8 @@ raft_o = env.StaticObject(
         CPPFLAGS = [ "-g", "-DDEBUG" ],
         CXXFLAGS = "-std=c++11")
 
-env.StaticLibrary("raft", 
-        source = raft_o, 
+env.StaticLibrary("raft",
+        source = raft_o,
         CPPPATH = [],
         CPPFLAGS = [ "-g", "-DDEBUG" ],
         CXXFLAGS = "-std=c++11")

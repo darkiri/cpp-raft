@@ -2,20 +2,20 @@
 #define RAFT_LOG
 
 namespace raft {
-    struct LogEntry {
-        int term;
-        void* data;
-    };
+  struct LogEntry {
+    int term;
+    void* data;
+  };
 
-    class Log {
-        public:
-            Log() {};
-            virtual ~Log() {};
+  class Log {
+    public:
+      Log() {};
+      virtual ~Log() {};
 
-            virtual const LogEntry& GetLastEntry() const = 0;
-        private:
-            Log(Log&);
-            Log& operator=(const Log&);
-    };
+      virtual const LogEntry& GetLastEntry() const = 0;
+    private:
+      Log(Log&);
+      Log& operator=(const Log&);
+  };
 }
 #endif
