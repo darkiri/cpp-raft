@@ -7,7 +7,7 @@ namespace raft {
 
   class LogStub : public Log {
     public:
-      LogStub(int lastTerm): _stubEntry{ lastTerm } {};
+      LogStub(int lastTerm): _stubEntry{ lastTerm, nullptr } {};
       const LogEntry& GetLastEntry() const {
         return _stubEntry;
       };
