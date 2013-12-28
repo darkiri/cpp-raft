@@ -3,3 +3,5 @@ build
 .sconsign.*
 *.swp
 *.pyc
+cscope.*.out
+cscope.out
