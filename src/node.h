@@ -10,10 +10,6 @@ namespace raft {
     LEADER = 2
   };
 
-  struct Entry {
-    int term;
-  };
-
   struct AppendResult{
     int term;
     bool success;
@@ -26,7 +22,10 @@ namespace raft {
       NodeState GetState() const {
         return _state;
       };
-      const AppendResult AppendEntry(const Entry& entry);
+      const AppendResult AppendEntries(
+          int term,
+          int prev_log_index,
+          int prev_log_term);
     private:
       Node(Node&);
       Node& operator=(const Node&);
