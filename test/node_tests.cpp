@@ -1,33 +1,7 @@
 #include <gtest/gtest.h>
-#include <node.h>
-#include <vector>
-#include <memory>
-
-using namespace std;
+#include "test_funcs.h"
 
 namespace raft {
-
-  class InMemoryLog : public Log {
-    public:
-      InMemoryLog() {};
-      void Append(const LogEntry& entry) {
-        auto e = unique_ptr<LogEntry>(new LogEntry(entry));
-        _entries.push_back(move(e));
-      }
-      const LogEntry* GetLastEntry() const {
-        return _entries.empty() 
-          ? nullptr 
-          : _entries.back().get();
-      };
-      const LogEntry* Get(unsigned int index) const {
-        return _entries.size() <= index 
-          ? nullptr 
-          : _entries[index].get();
-      }
-      virtual ~InMemoryLog() { };
-    private:
-      vector<unique_ptr<LogEntry>> _entries;
-  };
 
   class NodeTest : public ::testing::Test {
     protected:
@@ -37,10 +11,6 @@ namespace raft {
       virtual ~NodeTest() {
       }
   };
-
-  const LogEntry CreateLogEntry(int term) {
-    return LogEntry { term };
-  }
 
   TEST_F(NodeTest, New_Node_Is_Follower) {
     InMemoryLog log;

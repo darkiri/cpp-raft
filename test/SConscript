@@ -9,7 +9,7 @@ env.StaticObject("gtest-all.o",
         CXXFLAGS = "-std=c++0x")
 
 env.Program("test", 
-        source = (["test_runner.cpp", "node_tests.cpp", "gtest-all.o"]), 
+        source = (["test_runner.cpp", "node_tests.cpp", "log_tests.cpp", "gtest-all.o"]), 
         LIBS = ["pthread", "raft"],
         LIBPATH = ["#build/raft"],
         CPPPATH = ["#gtest/include", "#src"],
