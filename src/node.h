@@ -25,7 +25,9 @@ namespace raft {
       const AppendResult AppendEntries(
           int term,
           int prev_log_index,
-          int prev_log_term);
+          int prev_log_term,
+          std::vector<LogEntry> entries,
+          int leaderCommit);
     private:
       Node(Node&);
       Node& operator=(const Node&);

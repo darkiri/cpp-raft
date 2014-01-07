@@ -20,6 +20,7 @@ namespace raft {
       // the return value is available as long as the Log alive
       virtual const LogEntry* GetLastEntry() const = 0;
       virtual const LogEntry* Get(unsigned int index) const = 0;
+      virtual unsigned int Size() const = 0;
       virtual void Append(const LogEntry& entry) = 0;
       virtual void Trim(unsigned int index) = 0;
     private:
@@ -39,6 +40,9 @@ namespace raft {
         return _entries.size() <= index 
           ? nullptr 
           : _entries[index].get();
+      }
+      virtual unsigned int Size() const {
+        return _entries.size();
       }
       void Append(const LogEntry& entry) {
         auto e = unique_ptr<LogEntry>(new LogEntry(entry));
