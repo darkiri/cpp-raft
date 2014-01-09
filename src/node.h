@@ -10,11 +10,6 @@ namespace raft {
     LEADER = 2
   };
 
-  struct AppendResult{
-    unsigned int term;
-    bool success;
-  };
-
   // this class is per design not thread safe
   class Node {
     public:
@@ -22,12 +17,20 @@ namespace raft {
       NodeState GetState() const {
         return _state;
       };
-      const AppendResult AppendEntries(
-          unsigned int term,
-          unsigned int prev_log_index,
-          unsigned int prev_log_term,
-          std::vector<LogEntry> entries,
-          unsigned int leaderCommit);
+      struct AppendEntriesArgs {
+          unsigned int term;
+          unsigned int prev_log_index;
+          unsigned int prev_log_term;
+          std::vector<LogEntry> entries;
+          unsigned int leaderCommit;
+      };
+
+      struct AppendResult{
+        unsigned int term;
+        bool success;
+      };
+
+      const AppendResult AppendEntries(AppendEntriesArgs& args);
     private:
       Node(Node&);
       Node& operator=(const Node&);

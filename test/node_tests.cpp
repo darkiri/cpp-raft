@@ -14,8 +14,12 @@ namespace raft {
       }
   };
 
-  AppendResult AppendEntries(Node& node, int term, int prev_log_index, int prev_log_term, vector<LogEntry> entries = vector<LogEntry>()){
-    return node.AppendEntries(term, prev_log_index, prev_log_term, entries, 0);
+  Node::AppendEntriesArgs MakeArgs(
+      unsigned int term,
+      unsigned int prev_log_index,
+      unsigned int prev_log_term,
+      vector<LogEntry> entries = vector<LogEntry>()){
+    return Node::AppendEntriesArgs {term, prev_log_index, prev_log_term, entries, 0};
   }
 
   TEST_F(NodeTest, New_Node_Is_Follower) {
@@ -28,14 +32,16 @@ namespace raft {
     InMemoryLog log;
     log.Append(CreateLogEntry(2));
     Node node(log);
-    auto res = AppendEntries(node, 1, 0, 0);
+    auto args = MakeArgs(1, 0, 0);
+    auto res = node.AppendEntries(args);
     EXPECT_EQ(2, res.term);
   }
 
   TEST_F(NodeTest, AppendEntries_Returns_False_For_Empty_Log) {
     InMemoryLog log;
     Node node(log);
-    auto res = AppendEntries(node, 1, 0, 0);
+    auto args = MakeArgs(1, 0, 0);
+    auto res = node.AppendEntries(args);
     EXPECT_FALSE(res.success);
   }
 
@@ -43,7 +49,8 @@ namespace raft {
     InMemoryLog log;
     log.Append(CreateLogEntry(2));
     Node node(log);
-    auto res = AppendEntries(node, 1, 0, 0);
+    auto args = MakeArgs(1, 0, 0);
+    auto res = node.AppendEntries(args);
     EXPECT_FALSE(res.success);
   }
 
@@ -52,7 +59,8 @@ namespace raft {
     log.Append(CreateLogEntry(2));
     log.Append(CreateLogEntry(3));
     Node node(log);
-    auto res = AppendEntries(node, 3, 0, 1);
+    auto args = MakeArgs(3, 0, 1);
+    auto res = node.AppendEntries(args);
     EXPECT_FALSE(res.success);
   }
 
@@ -62,7 +70,8 @@ namespace raft {
     log.Append(CreateLogEntry(3));
     Node node(log);
     auto entries = vector<LogEntry> {CreateLogEntry(4), CreateLogEntry(5)};
-    auto res = AppendEntries(node, 5, 0, 2, entries);
+    auto args = MakeArgs(5, 0, 2, entries);
+    auto res = node.AppendEntries(args);
     EXPECT_TRUE(res.success);
     EXPECT_EQ(2, log.Get(0)->term);
     EXPECT_EQ(4, log.Get(1)->term);
@@ -74,7 +83,8 @@ namespace raft {
     log.Append(CreateLogEntry(2));
     Node node(log);
     auto entries = vector<LogEntry> {CreateLogEntry(4)};
-    auto res = AppendEntries(node, 5, 0, 2, entries);
+    auto args = MakeArgs(5, 0, 2, entries);
+    auto res = node.AppendEntries(args);
     EXPECT_TRUE(res.success);
     EXPECT_EQ(2, log.Get(0)->term);
     EXPECT_EQ(4, log.Get(1)->term);

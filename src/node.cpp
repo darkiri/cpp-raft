@@ -1,20 +1,15 @@
 #include "node.h"
 
 namespace raft {
-  const AppendResult Node::AppendEntries(
-      unsigned int term,
-      unsigned int prev_log_index,
-      unsigned int prev_log_term,
-      std::vector<LogEntry> entries,
-      unsigned int /*leaderCommit*/) {
+  const Node::AppendResult Node::AppendEntries(Node::AppendEntriesArgs& args) {
     auto lastEntry = _log.GetLastEntry();
-    auto prevIndexEntry = _log.Get(prev_log_index);
-    auto success = (lastEntry && lastEntry->term < term) &&
-      (prevIndexEntry && prevIndexEntry->term == prev_log_term);
+    auto prevIndexEntry = _log.Get(args.prev_log_index);
+    auto success = (lastEntry && lastEntry->term < args.term) &&
+      (prevIndexEntry && prevIndexEntry->term == args.prev_log_term);
     if (success) {
-      auto i = prev_log_index;
+      auto i = args.prev_log_index;
       auto s = _log.Size();
-      for (auto& e: entries) {
+      for (auto& e: args.entries) {
         i++;
         if (i+1 > s) {
           _log.Append(e);
@@ -28,7 +23,7 @@ namespace raft {
         _log.Append(e);
       }
     }
-    return AppendResult{
+    return Node::AppendResult{
       lastEntry ? lastEntry->term : 0,
       success
     };
