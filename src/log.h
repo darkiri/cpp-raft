@@ -8,7 +8,7 @@ using namespace std;
 
 namespace raft {
   struct LogEntry {
-    int term;
+    unsigned int term;
 // TODO   void* data;
   };
 

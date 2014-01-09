@@ -2,14 +2,14 @@
 
 namespace raft {
   const AppendResult Node::AppendEntries(
-      int term, 
-      int prev_log_index,
-      int prev_log_term,
+      unsigned int term,
+      unsigned int prev_log_index,
+      unsigned int prev_log_term,
       std::vector<LogEntry> entries,
-      int leaderCommit) {
+      unsigned int /*leaderCommit*/) {
     auto lastEntry = _log.GetLastEntry();
     auto prevIndexEntry = _log.Get(prev_log_index);
-    auto success = (lastEntry && lastEntry->term < term) && 
+    auto success = (lastEntry && lastEntry->term < term) &&
       (prevIndexEntry && prevIndexEntry->term == prev_log_term);
     if (success) {
       auto i = prev_log_index;

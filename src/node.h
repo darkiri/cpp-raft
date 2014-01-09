@@ -11,7 +11,7 @@ namespace raft {
   };
 
   struct AppendResult{
-    int term;
+    unsigned int term;
     bool success;
   };
 
@@ -23,11 +23,11 @@ namespace raft {
         return _state;
       };
       const AppendResult AppendEntries(
-          int term,
-          int prev_log_index,
-          int prev_log_term,
+          unsigned int term,
+          unsigned int prev_log_index,
+          unsigned int prev_log_term,
           std::vector<LogEntry> entries,
-          int leaderCommit);
+          unsigned int leaderCommit);
     private:
       Node(Node&);
       Node& operator=(const Node&);

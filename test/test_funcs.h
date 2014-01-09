@@ -4,7 +4,7 @@
 #include "node.h"
 
 namespace raft {
-  inline LogEntry CreateLogEntry(int term) {
+  inline LogEntry CreateLogEntry(unsigned int term) {
     return LogEntry { term };
   }
 }
