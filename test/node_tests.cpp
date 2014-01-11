@@ -22,6 +22,13 @@ namespace raft {
     return AppendEntriesArgs {term, prev_log_index, prev_log_term, entries, 0};
   }
 
+  void ExpectLogSize(Log& log, int s) {
+    EXPECT_EQ(s, log.Size());
+  }
+  void ExpectLogTerm(Log& log, int i, int t) {
+    EXPECT_EQ(t, log.Get(i)->term);
+  }
+
   TEST_F(NodeTest, New_Node_Is_Follower) {
     InMemoryLog log;
     Node node(log);
@@ -54,6 +61,15 @@ namespace raft {
     EXPECT_FALSE(res.success);
   }
 
+  TEST_F(NodeTest, AppendEntries_Returns_True_If_Term_Is_Same_As_CurrentTerm) {
+    InMemoryLog log;
+    log.Append(CreateLogEntry(2));
+    Node node(log);
+    auto args = MakeArgs(2, 0, 0);
+    auto res = node.AppendEntries(args);
+    EXPECT_TRUE(res.success);
+  }
+
   TEST_F(NodeTest, AppendEntries_Returns_False_If_Log_DoesNotContain_prevLogTerm_At_prevLogIndex) {
     InMemoryLog log;
     log.Append(CreateLogEntry(2));
@@ -73,12 +89,13 @@ namespace raft {
     auto args = MakeArgs(5, 0, 2, entries);
     auto res = node.AppendEntries(args);
     EXPECT_TRUE(res.success);
-    EXPECT_EQ(2, log.Get(0)->term);
-    EXPECT_EQ(4, log.Get(1)->term);
-    EXPECT_EQ(5, log.Get(2)->term);
+    ExpectLogSize(log, 3);
+    ExpectLogTerm(log, 0, 2);
+    ExpectLogTerm(log, 1, 4);
+    ExpectLogTerm(log, 2, 5);
   }
 
-  TEST_F(NodeTest, AppendEntries_AppendNewEntries) { // yep, this is the name
+  TEST_F(NodeTest, AppendEntries_AppendsNewEntries) { // yep, this is the name
     InMemoryLog log;
     log.Append(CreateLogEntry(2));
     Node node(log);
@@ -86,7 +103,20 @@ namespace raft {
     auto args = MakeArgs(5, 0, 2, entries);
     auto res = node.AppendEntries(args);
     EXPECT_TRUE(res.success);
-    EXPECT_EQ(2, log.Get(0)->term);
-    EXPECT_EQ(4, log.Get(1)->term);
+    ExpectLogSize(log, 2);
+    ExpectLogTerm(log, 0, 2);
+    ExpectLogTerm(log, 1, 4);
+  }
+
+  TEST_F(NodeTest, AppendEntries_KeepAlive_Does_Not_AppendEntries) {
+    InMemoryLog log;
+    log.Append(CreateLogEntry(2));
+    Node node(log);
+    auto entries = vector<LogEntry>();
+    auto args = MakeArgs(2, 0, 2, entries);
+    auto res = node.AppendEntries(args);
+    EXPECT_TRUE(res.success);
+    ExpectLogSize(log, 1);
+    ExpectLogTerm(log, 0, 2);
   }
 }

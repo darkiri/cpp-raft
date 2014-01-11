@@ -4,26 +4,26 @@ namespace raft {
   const AppendEntriesRes Node::AppendEntries(const AppendEntriesArgs& args) {
     auto lastEntry = log_.GetLastEntry();
     auto prevIndexEntry = log_.Get(args.prev_log_index);
-    auto success = (lastEntry && lastEntry->term < args.term) &&
-      (prevIndexEntry && prevIndexEntry->term == args.prev_log_term);
+    auto s = log_.Size();
+    auto success = (lastEntry && lastEntry->term <= args.term) &&
+      (s < 2 || (prevIndexEntry && prevIndexEntry->term == args.prev_log_term));
     if (success) {
-      auto i = args.prev_log_index;
-      auto s = log_.Size();
+      auto index = args.prev_log_index;
       for (auto& e: args.entries) {
-        i++;
-        if (i+1 > s) {
+        ++index;
+        if (index >= s) {
           log_.Append(e);
-          continue;
+        } else {
+          auto ce = log_.Get(index);
+          if (ce->term != e.term) {
+            log_.Trim(index);
+            s = index - 1;
+          }
+          log_.Append(e);
         }
-        auto ce = log_.Get(i);
-        if (ce->term != e.term) {
-          log_.Trim(i);
-          s = i - 1;
-        }
-        log_.Append(e);
       }
     }
-    return AppendEntriesRes{
+    return AppendEntriesRes {
       lastEntry ? lastEntry->term : 0,
       success
     };
