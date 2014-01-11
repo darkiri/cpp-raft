@@ -1,7 +1,7 @@
 #include "node.h"
 
 namespace raft {
-  const Node::AppendResult Node::AppendEntries(Node::AppendEntriesArgs& args) {
+  const AppendEntriesRes Node::AppendEntries(const AppendEntriesArgs& args) {
     auto lastEntry = _log.GetLastEntry();
     auto prevIndexEntry = _log.Get(args.prev_log_index);
     auto success = (lastEntry && lastEntry->term < args.term) &&
@@ -23,7 +23,7 @@ namespace raft {
         _log.Append(e);
       }
     }
-    return Node::AppendResult{
+    return AppendEntriesRes{
       lastEntry ? lastEntry->term : 0,
       success
     };

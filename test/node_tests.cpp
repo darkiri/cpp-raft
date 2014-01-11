@@ -14,12 +14,12 @@ namespace raft {
       }
   };
 
-  Node::AppendEntriesArgs MakeArgs(
+  AppendEntriesArgs MakeArgs(
       unsigned int term,
       unsigned int prev_log_index,
       unsigned int prev_log_term,
       vector<LogEntry> entries = vector<LogEntry>()){
-    return Node::AppendEntriesArgs {term, prev_log_index, prev_log_term, entries, 0};
+    return AppendEntriesArgs {term, prev_log_index, prev_log_term, entries, 0};
   }
 
   TEST_F(NodeTest, New_Node_Is_Follower) {
