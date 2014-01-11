@@ -26,17 +26,17 @@ namespace raft {
   // this class is per design not thread safe
   class Node {
     public:
-      Node(Log& log): _state(FOLLOWER), _log(log) { };
+      Node(Log& log): state_(FOLLOWER), log_(log) { };
       NodeState GetState() const {
-        return _state;
+        return state_;
       };
       const AppendEntriesRes AppendEntries(const AppendEntriesArgs& args);
     private:
       Node(Node&);
       Node& operator=(const Node&);
 
-      NodeState _state;
-      Log& _log;
+      NodeState state_;
+      Log& log_;
   };
 }
 #endif

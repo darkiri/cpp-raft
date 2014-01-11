@@ -32,28 +32,28 @@ namespace raft {
     public:
       InMemoryLog() {};
       const LogEntry* GetLastEntry() const {
-        return _entries.empty()
+        return entries_.empty()
           ? nullptr
-          : _entries.back().get();
+          : entries_.back().get();
       };
       const LogEntry* Get(unsigned int index) const {
-        return _entries.size() <= index 
+        return entries_.size() <= index 
           ? nullptr 
-          : _entries[index].get();
+          : entries_[index].get();
       }
       virtual unsigned int Size() const {
-        return _entries.size();
+        return entries_.size();
       }
       void Append(const LogEntry& entry) {
         auto e = unique_ptr<LogEntry>(new LogEntry(entry));
-        _entries.push_back(move(e));
+        entries_.push_back(move(e));
       }
       void Trim(unsigned int index) {
-        _entries.erase(_entries.begin() + index, _entries.end());
+        entries_.erase(entries_.begin() + index, entries_.end());
       }
       virtual ~InMemoryLog() { };
     private:
-      vector<unique_ptr<LogEntry>> _entries;
+      vector<unique_ptr<LogEntry>> entries_;
   };
 }
 #endif
