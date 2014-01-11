@@ -15,7 +15,7 @@ namespace raft {
     unsigned int prev_log_index;
     unsigned int prev_log_term;
     std::vector<LogEntry> entries;
-    unsigned int leaderCommit;
+    unsigned int leader_commit;
   };
 
   struct AppendEntriesRes{
@@ -26,9 +26,12 @@ namespace raft {
   // this class is per design not thread safe
   class Node {
     public:
-      Node(Log& log): state_(FOLLOWER), log_(log) { };
+      Node(Log& log): state_(FOLLOWER), commit_index_(0), log_(log) { };
       NodeState GetState() const {
         return state_;
+      };
+      unsigned int GetCommitIndex() const {
+        return commit_index_;
       };
       const AppendEntriesRes AppendEntries(const AppendEntriesArgs& args);
     private:
@@ -36,6 +39,7 @@ namespace raft {
       Node& operator=(const Node&);
 
       NodeState state_;
+      unsigned int commit_index_;
       Log& log_;
   };
 }

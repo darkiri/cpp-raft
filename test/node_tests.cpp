@@ -18,8 +18,9 @@ namespace raft {
       unsigned int term,
       unsigned int prev_log_index,
       unsigned int prev_log_term,
-      vector<LogEntry> entries = vector<LogEntry>()){
-    return AppendEntriesArgs {term, prev_log_index, prev_log_term, entries, 0};
+      vector<LogEntry> entries = vector<LogEntry>(),
+      unsigned int commit_index = 0){
+    return AppendEntriesArgs {term, prev_log_index, prev_log_term, entries, commit_index};
   }
 
   void ExpectLogSize(Log& log, int s) {
@@ -33,6 +34,12 @@ namespace raft {
     InMemoryLog log;
     Node node(log);
     EXPECT_EQ(FOLLOWER, node.GetState());
+  }
+
+  TEST_F(NodeTest, New_Node_Commit_Index_0) {
+    InMemoryLog log;
+    Node node(log);
+    EXPECT_EQ(0, node.GetCommitIndex());
   }
 
   TEST_F(NodeTest, AppendEntries_Returns_CurrentTerm) {
@@ -118,5 +125,17 @@ namespace raft {
     EXPECT_TRUE(res.success);
     ExpectLogSize(log, 1);
     ExpectLogTerm(log, 0, 2);
+  }
+  
+  TEST_F(NodeTest, AppendEntries_Updates_CommitIndex) {
+    InMemoryLog log;
+    log.Append(CreateLogEntry(2));
+    log.Append(CreateLogEntry(2));
+    Node node(log);
+    auto entries = vector<LogEntry>();
+    auto args = MakeArgs(2, 1, 2, entries, 1);
+    auto res = node.AppendEntries(args);
+    EXPECT_TRUE(res.success);
+    EXPECT_EQ(1, node.GetCommitIndex());
   }
 }

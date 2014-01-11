@@ -22,6 +22,9 @@ namespace raft {
           log_.Append(e);
         }
       }
+      commit_index_ = args.leader_commit < log_.Size() 
+        ? args.leader_commit 
+        : log_.Size()-1;
     }
     return AppendEntriesRes {
       lastEntry ? lastEntry->term : 0,
