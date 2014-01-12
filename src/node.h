@@ -23,23 +23,44 @@ namespace raft {
     bool success;
   };
 
+  struct RequestVoteArgs {
+    unsigned int term;
+    unsigned int candidate_id;
+    unsigned int last_log_index;
+    unsigned int last_log_term;
+  };
+
   // this class is per design not thread safe
   class Node {
     public:
-      Node(Log& log): state_(FOLLOWER), commit_index_(0), log_(log) { };
+      Node(Log& log):
+        state_(FOLLOWER),
+        commit_index_(0),
+        voted_for_(0),
+        log_(log) { };
+
       NodeState GetState() const {
         return state_;
       };
       unsigned int GetCommitIndex() const {
         return commit_index_;
       };
-      const AppendEntriesRes AppendEntries(const AppendEntriesArgs& args);
+      unsigned int GetVotedFor() const {
+        return voted_for_;
+      }
+      AppendEntriesRes AppendEntries(const AppendEntriesArgs& args);
+      AppendEntriesRes RequestVote(const RequestVoteArgs& args);
     private:
       Node(Node&);
       Node& operator=(const Node&);
 
+      inline AppendEntriesRes CreateRes(bool success) const;
+      inline bool IsTermUpToDate(unsigned int term) const;
+      inline bool IsLogUpToDate(unsigned int index, unsigned int term) const;
+
       NodeState state_;
       unsigned int commit_index_;
+      unsigned int voted_for_;
       Log& log_;
   };
 }
