@@ -45,6 +45,7 @@ namespace raft {
 
   TEST_F(NodeTest, AppendEntries_Returns_CurrentTerm) {
     InMemoryLog log;
+    log.Append(CreateLogEntry(1));
     log.Append(CreateLogEntry(2));
     Node node(log);
     auto args = MakeAppendArgs(1, 0, 0);
@@ -62,7 +63,9 @@ namespace raft {
 
   TEST_F(NodeTest, AppendEntries_Returns_False_If_Term_Is_Lower_As_CurrentTerm) {
     InMemoryLog log;
+    log.Append(CreateLogEntry(1));
     log.Append(CreateLogEntry(2));
+    log.Append(CreateLogEntry(3));
     Node node(log);
     auto args = MakeAppendArgs(1, 0, 0);
     auto res = node.AppendEntries(args);
@@ -80,27 +83,32 @@ namespace raft {
 
   TEST_F(NodeTest, AppendEntries_Returns_False_If_Log_DoesNotContain_prevLogTerm_At_prevLogIndex) {
     InMemoryLog log;
+    log.Append(CreateLogEntry(1));
     log.Append(CreateLogEntry(2));
     log.Append(CreateLogEntry(3));
+    log.Append(CreateLogEntry(3));
     Node node(log);
-    auto args = MakeAppendArgs(3, 0, 1);
+    auto args = MakeAppendArgs(3, 1, 1);
     auto res = node.AppendEntries(args);
     EXPECT_FALSE(res.success);
   }
 
   TEST_F(NodeTest, AppendEntries_TrimsLog_If_TermDoesNotMatch) {
     InMemoryLog log;
+    log.Append(CreateLogEntry(1));
+    log.Append(CreateLogEntry(2));
     log.Append(CreateLogEntry(2));
     log.Append(CreateLogEntry(3));
     Node node(log);
     auto entries = vector<LogEntry> {CreateLogEntry(4), CreateLogEntry(5)};
-    auto args = MakeAppendArgs(5, 0, 2, entries);
+    auto args = MakeAppendArgs(5, 1, 2, entries);
     auto res = node.AppendEntries(args);
     EXPECT_TRUE(res.success);
-    ExpectLogSize(log, 3);
-    ExpectLogTerm(log, 0, 2);
-    ExpectLogTerm(log, 1, 4);
-    ExpectLogTerm(log, 2, 5);
+    ExpectLogSize(log, 4);
+    ExpectLogTerm(log, 0, 1);
+    ExpectLogTerm(log, 1, 2);
+    ExpectLogTerm(log, 2, 4);
+    ExpectLogTerm(log, 3, 5);
   }
 
   TEST_F(NodeTest, AppendEntries_AppendsNewEntries) { // yep, this is the name
@@ -118,18 +126,21 @@ namespace raft {
 
   TEST_F(NodeTest, AppendEntries_KeepAlive_Does_Not_AppendEntries) {
     InMemoryLog log;
+    log.Append(CreateLogEntry(1));
     log.Append(CreateLogEntry(2));
     Node node(log);
     auto entries = vector<LogEntry>();
-    auto args = MakeAppendArgs(2, 0, 2, entries);
+    auto args = MakeAppendArgs(2, 1, 2, entries);
     auto res = node.AppendEntries(args);
     EXPECT_TRUE(res.success);
-    ExpectLogSize(log, 1);
-    ExpectLogTerm(log, 0, 2);
+    ExpectLogSize(log, 2);
+    ExpectLogTerm(log, 0, 1);
+    ExpectLogTerm(log, 1, 2);
   }
   
   TEST_F(NodeTest, AppendEntries_Updates_CommitIndex) {
     InMemoryLog log;
+    log.Append(CreateLogEntry(1));
     log.Append(CreateLogEntry(2));
     log.Append(CreateLogEntry(2));
     Node node(log);
@@ -142,6 +153,7 @@ namespace raft {
 
   TEST_F(NodeTest, RequestVote_Returns_False_If_Term_Is_Lower_As_CurrentTerm) {
     InMemoryLog log;
+    log.Append(CreateLogEntry(1));
     log.Append(CreateLogEntry(2));
     Node node(log);
     auto args = MakeRequestVoteArgs(1, 1, 0, 1);
@@ -151,6 +163,7 @@ namespace raft {
 
   TEST_F(NodeTest, RequestVote_Returns_CurrentTerm) {
     InMemoryLog log;
+    log.Append(CreateLogEntry(1));
     log.Append(CreateLogEntry(2));
     Node node(log);
     auto args = MakeRequestVoteArgs(1, 1, 0, 1);
@@ -171,10 +184,11 @@ namespace raft {
 
   TEST_F(NodeTest, RequestVote_Returns_False_If_CandidatesLog_Is_Not_UpToDate) {
     InMemoryLog log;
+    log.Append(CreateLogEntry(1));
     log.Append(CreateLogEntry(2));
     log.Append(CreateLogEntry(2));
     Node node(log);
-    auto args = MakeRequestVoteArgs(2, 1, 0, 2);
+    auto args = MakeRequestVoteArgs(2, 1, 0, 1);
     auto res = node.RequestVote(args);
     EXPECT_FALSE(res.success);
   }
