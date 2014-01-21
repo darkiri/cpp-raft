@@ -33,7 +33,7 @@ namespace raft {
 
   template<class Log>
   void ExpectLogTerm(Log& log, int i, int t) {
-    EXPECT_EQ(t, log.Begin()[i].get()->term);
+    EXPECT_EQ(t, log.Begin()[i].term);
   }
 
   TEST_F(NodeTest, New_Node_Is_Follower) {

@@ -19,6 +19,6 @@ namespace raft {
     log.Append(CreateLogEntry(2));
     log.Append(CreateLogEntry(3));
     log.Trim(1);
-    EXPECT_EQ(1, (--log.End())->get()->term);
+    EXPECT_EQ(1, (--log.End())->term);
   }
 }

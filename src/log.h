@@ -13,25 +13,28 @@ namespace raft {
   class InMemoryLog {
       public:
         InMemoryLog() {};
-        std::vector<std::unique_ptr<LogEntry>>::const_iterator Begin() const{
+
+        std::vector<LogEntry>::const_iterator Begin() const{
           return entries_.begin();
         }
-        std::vector<std::unique_ptr<LogEntry>>::const_iterator End() const{
+        std::vector<LogEntry>::const_iterator End() const{
           return entries_.end();
         }
         virtual unsigned int Size() const {
           return entries_.size();
         }
         void Append(const LogEntry& entry) {
-          auto e = std::unique_ptr<LogEntry>(new LogEntry(entry));
-          entries_.push_back(move(e));
+          entries_.push_back(entry);
         }
         void Trim(unsigned int index) {
           entries_.erase(entries_.begin() + index, entries_.end());
         }
         virtual ~InMemoryLog() { };
       private:
-        std::vector<std::unique_ptr<LogEntry>> entries_;
+        InMemoryLog(const InMemoryLog&);
+        InMemoryLog& operator=(const InMemoryLog&);
+
+        std::vector<LogEntry> entries_;
     };
   }
 #endif
