@@ -7,6 +7,8 @@ namespace raft {
 
   class NodeTest : public ::testing::Test {};
 
+  typedef Node<InMemoryLog> InMemoryNode;
+
   AppendEntriesArgs MakeAppendArgs(
       unsigned int term,
       unsigned int prev_log_index,
@@ -24,22 +26,25 @@ namespace raft {
     return RequestVoteArgs {term, candidate_id, last_log_index, last_log_term};
   }
 
+  template<class Log>
   void ExpectLogSize(Log& log, int s) {
     EXPECT_EQ(s, log.Size());
   }
+
+  template<class Log>
   void ExpectLogTerm(Log& log, int i, int t) {
-    EXPECT_EQ(t, log.Get(i)->term);
+    EXPECT_EQ(t, log.Begin()[i].get()->term);
   }
 
   TEST_F(NodeTest, New_Node_Is_Follower) {
     InMemoryLog log;
-    Node node(log);
+    InMemoryNode node(log);
     EXPECT_EQ(FOLLOWER, node.GetState());
   }
 
   TEST_F(NodeTest, New_Node_Commit_Index_0) {
     InMemoryLog log;
-    Node node(log);
+    InMemoryNode node(log);
     EXPECT_EQ(0, node.GetCommitIndex());
   }
 
@@ -47,7 +52,7 @@ namespace raft {
     InMemoryLog log;
     log.Append(CreateLogEntry(1));
     log.Append(CreateLogEntry(2));
-    Node node(log);
+    InMemoryNode node(log);
     auto args = MakeAppendArgs(1, 0, 0);
     auto res = node.AppendEntries(args);
     EXPECT_EQ(2, res.term);
@@ -55,7 +60,7 @@ namespace raft {
 
   TEST_F(NodeTest, AppendEntries_Returns_False_For_Empty_Log) {
     InMemoryLog log;
-    Node node(log);
+    InMemoryNode node(log);
     auto args = MakeAppendArgs(1, 0, 0);
     auto res = node.AppendEntries(args);
     EXPECT_FALSE(res.success);
@@ -66,7 +71,7 @@ namespace raft {
     log.Append(CreateLogEntry(1));
     log.Append(CreateLogEntry(2));
     log.Append(CreateLogEntry(3));
-    Node node(log);
+    InMemoryNode node(log);
     auto args = MakeAppendArgs(1, 0, 0);
     auto res = node.AppendEntries(args);
     EXPECT_FALSE(res.success);
@@ -75,7 +80,7 @@ namespace raft {
   TEST_F(NodeTest, AppendEntries_Returns_True_If_Term_Is_Same_As_CurrentTerm) {
     InMemoryLog log;
     log.Append(CreateLogEntry(2));
-    Node node(log);
+    InMemoryNode node(log);
     auto args = MakeAppendArgs(2, 0, 0);
     auto res = node.AppendEntries(args);
     EXPECT_TRUE(res.success);
@@ -87,7 +92,7 @@ namespace raft {
     log.Append(CreateLogEntry(2));
     log.Append(CreateLogEntry(3));
     log.Append(CreateLogEntry(3));
-    Node node(log);
+    InMemoryNode node(log);
     auto args = MakeAppendArgs(3, 1, 1);
     auto res = node.AppendEntries(args);
     EXPECT_FALSE(res.success);
@@ -99,7 +104,7 @@ namespace raft {
     log.Append(CreateLogEntry(2));
     log.Append(CreateLogEntry(2));
     log.Append(CreateLogEntry(3));
-    Node node(log);
+    InMemoryNode node(log);
     auto entries = vector<LogEntry> {CreateLogEntry(4), CreateLogEntry(5)};
     auto args = MakeAppendArgs(5, 1, 2, entries);
     auto res = node.AppendEntries(args);
@@ -114,7 +119,7 @@ namespace raft {
   TEST_F(NodeTest, AppendEntries_AppendsNewEntries) { // yep, this is the name
     InMemoryLog log;
     log.Append(CreateLogEntry(2));
-    Node node(log);
+    InMemoryNode node(log);
     auto entries = vector<LogEntry> {CreateLogEntry(4)};
     auto args = MakeAppendArgs(5, 0, 2, entries);
     auto res = node.AppendEntries(args);
@@ -128,7 +133,7 @@ namespace raft {
     InMemoryLog log;
     log.Append(CreateLogEntry(1));
     log.Append(CreateLogEntry(2));
-    Node node(log);
+    InMemoryNode node(log);
     auto entries = vector<LogEntry>();
     auto args = MakeAppendArgs(2, 1, 2, entries);
     auto res = node.AppendEntries(args);
@@ -137,13 +142,13 @@ namespace raft {
     ExpectLogTerm(log, 0, 1);
     ExpectLogTerm(log, 1, 2);
   }
-  
+
   TEST_F(NodeTest, AppendEntries_Updates_CommitIndex) {
     InMemoryLog log;
     log.Append(CreateLogEntry(1));
     log.Append(CreateLogEntry(2));
     log.Append(CreateLogEntry(2));
-    Node node(log);
+    InMemoryNode node(log);
     auto entries = vector<LogEntry>();
     auto args = MakeAppendArgs(2, 1, 2, entries, 1);
     auto res = node.AppendEntries(args);
@@ -155,7 +160,7 @@ namespace raft {
     InMemoryLog log;
     log.Append(CreateLogEntry(1));
     log.Append(CreateLogEntry(2));
-    Node node(log);
+    InMemoryNode node(log);
     auto args = MakeRequestVoteArgs(1, 1, 0, 1);
     auto res = node.RequestVote(args);
     EXPECT_FALSE(res.success);
@@ -165,7 +170,7 @@ namespace raft {
     InMemoryLog log;
     log.Append(CreateLogEntry(1));
     log.Append(CreateLogEntry(2));
-    Node node(log);
+    InMemoryNode node(log);
     auto args = MakeRequestVoteArgs(1, 1, 0, 1);
     auto res = node.RequestVote(args);
     EXPECT_EQ(2, res.term);
@@ -174,7 +179,7 @@ namespace raft {
   TEST_F(NodeTest, RequestVote_Returns_False_If_Already_VotedFor_Another_Candiate) {
     InMemoryLog log;
     log.Append(CreateLogEntry(2));
-    Node node(log);
+    InMemoryNode node(log);
     auto args = MakeRequestVoteArgs(2, 1, 0, 2);
     node.RequestVote(args);
     args = MakeRequestVoteArgs(2, 2, 0, 2);
@@ -187,7 +192,7 @@ namespace raft {
     log.Append(CreateLogEntry(1));
     log.Append(CreateLogEntry(2));
     log.Append(CreateLogEntry(2));
-    Node node(log);
+    InMemoryNode node(log);
     auto args = MakeRequestVoteArgs(2, 1, 0, 1);
     auto res = node.RequestVote(args);
     EXPECT_FALSE(res.success);
@@ -197,7 +202,7 @@ namespace raft {
     InMemoryLog log;
     log.Append(CreateLogEntry(2));
     log.Append(CreateLogEntry(2));
-    Node node(log);
+    InMemoryNode node(log);
     auto args = MakeRequestVoteArgs(2, 1, 1, 2);
     auto res = node.RequestVote(args);
     EXPECT_TRUE(res.success);
@@ -207,7 +212,7 @@ namespace raft {
   TEST_F(NodeTest, RequestVote_Returns_True_If_Already_VotedFor_Same_Candiate) {
     InMemoryLog log;
     log.Append(CreateLogEntry(2));
-    Node node(log);
+    InMemoryNode node(log);
     auto args = MakeRequestVoteArgs(2, 1, 0, 2);
     node.RequestVote(args);
     args = MakeRequestVoteArgs(2, 1, 0, 2);

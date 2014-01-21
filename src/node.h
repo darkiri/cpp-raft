@@ -31,9 +31,10 @@ namespace raft {
   };
 
   // this class is per design not thread safe
+  template<class TLog>
   class Node {
     public:
-      Node(Log& log):
+      Node(TLog& log):
         state_(FOLLOWER),
         commit_index_(0),
         voted_for_(0),
@@ -51,17 +52,18 @@ namespace raft {
       AppendEntriesRes AppendEntries(const AppendEntriesArgs& args);
       AppendEntriesRes RequestVote(const RequestVoteArgs& args);
     private:
-      Node(Node&);
+      Node(const Node&);
       Node& operator=(const Node&);
 
-      inline AppendEntriesRes CreateRes(bool success) const;
-      inline bool IsTermUpToDate(unsigned int term) const;
+      inline AppendEntriesRes CreateRes(LogEntry* lastEntry, bool success) const;
+      inline bool IsTermUpToDate(LogEntry* lastEntry, unsigned int term) const;
       inline bool IsLogUpToDate(unsigned int index, unsigned int term) const;
 
       NodeState state_;
       unsigned int commit_index_;
-      unsigned int voted_for_;
-      Log& log_;
+      unsigned int voted_for_; // TODO must be persistent
+      // TODO currentTerm?
+      TLog& log_;
   };
 }
 #endif

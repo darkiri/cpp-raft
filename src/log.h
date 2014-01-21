@@ -4,40 +4,20 @@
 #include <vector>
 #include <memory>
 
-    namespace raft {
-    struct LogEntry {
-      unsigned int term;
-  // TODO   void* data;
-    };
+namespace raft {
+  struct LogEntry {
+    unsigned int term;
+    // TODO payload
+  };
 
-    class Log {
-      public:
-        Log() {};
-        virtual ~Log() {};
-
-        // the return value is available as long as the Log alive
-        virtual const LogEntry* GetLastEntry() const = 0;
-        virtual const LogEntry* Get(unsigned int index) const = 0;
-        virtual unsigned int Size() const = 0;
-        virtual void Append(const LogEntry& entry) = 0;
-        virtual void Trim(unsigned int index) = 0;
-      private:
-        Log(Log&);
-        Log& operator=(const Log&);
-    };
-
-    class InMemoryLog : public Log {
+  class InMemoryLog {
       public:
         InMemoryLog() {};
-        const LogEntry* GetLastEntry() const {
-          return entries_.empty()
-            ? nullptr
-            : entries_.back().get();
-        };
-        const LogEntry* Get(unsigned int index) const {
-          return entries_.size() <= index 
-            ? nullptr 
-            : entries_[index].get();
+        std::vector<std::unique_ptr<LogEntry>>::const_iterator Begin() const{
+          return entries_.begin();
+        }
+        std::vector<std::unique_ptr<LogEntry>>::const_iterator End() const{
+          return entries_.end();
         }
         virtual unsigned int Size() const {
           return entries_.size();
