@@ -98,6 +98,17 @@ namespace raft {
     EXPECT_FALSE(res.success);
   }
 
+  TEST_F(NodeTest, AppendEntries_Returns_False_If_Log_DoesNotContain_prevLogTerm_At_prevLogIndex_withMissingEntries) {
+    InMemoryLog log;
+    log.Append(CreateLogEntry(1));
+    log.Append(CreateLogEntry(2));
+    log.Append(CreateLogEntry(3));
+    InMemoryNode node(log);
+    auto args = MakeAppendArgs(5, 10, 4);
+    auto res = node.AppendEntries(args);
+    EXPECT_FALSE(res.success);
+  }
+
   TEST_F(NodeTest, AppendEntries_TrimsLog_If_TermDoesNotMatch) {
     InMemoryLog log;
     log.Append(CreateLogEntry(1));

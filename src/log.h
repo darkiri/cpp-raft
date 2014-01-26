@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <memory>
+#include <algorithm>
 
 namespace raft {
   struct LogEntry {
@@ -10,26 +11,30 @@ namespace raft {
     // TODO payload
   };
 
+  typedef std::vector<LogEntry>::const_iterator InMemoryIterator;
   class InMemoryLog {
       public:
         InMemoryLog() {};
 
-        std::vector<LogEntry>::const_iterator Begin() const{
+        InMemoryIterator Begin() const{
           return entries_.begin();
         }
-        std::vector<LogEntry>::const_iterator End() const{
+        InMemoryIterator End() const{
           return entries_.end();
         }
-        virtual unsigned int Size() const {
+        unsigned int Size() const {
           return entries_.size();
         }
-        void Append(const LogEntry& entry) {
-          entries_.push_back(entry);
+        void Append(InMemoryIterator begin, InMemoryIterator end) {
+          std::for_each(begin, end, [this](const LogEntry& e) { entries_.push_back(e);});
         }
-        void Trim(unsigned int index) {
-          entries_.erase(entries_.begin() + index, entries_.end());
+        void Append(const LogEntry& e) {
+          entries_.push_back(e);
         }
-        virtual ~InMemoryLog() { };
+        void Trim(InMemoryIterator iter) {
+          auto  nonConstIter = entries_.begin() + (iter - entries_.begin());
+          entries_.erase(nonConstIter, entries_.end());
+        }
       private:
         InMemoryLog(const InMemoryLog&);
         InMemoryLog& operator=(const InMemoryLog&);

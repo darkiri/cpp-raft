@@ -55,8 +55,6 @@ namespace raft {
       Node(const Node&);
       Node& operator=(const Node&);
 
-      inline AppendEntriesRes CreateRes(unsigned int lastTerm, bool success) const;
-      inline bool IsTermUpToDate(unsigned int lastTerm, unsigned int term) const;
       inline bool IsLogUpToDate(unsigned int index, unsigned int term) const;
 
       NodeState state_;
