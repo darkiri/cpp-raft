@@ -6,11 +6,11 @@ namespace raft {
   AppendEntriesRes Node<TLog>::AppendEntries(const AppendEntriesArgs& args) {
     auto size = log_.Size();
     auto logIter = log_.Begin();
-    auto lastTerm = size == 0 ? 0 : (logIter + size -1)->term;
-    auto prevIndexTerm = size == 0 ? 0 : (logIter + args.prev_log_index)->term;
+    auto currentTerm = size != 0 ? (logIter + size -1)->term : 0;
+    auto prevIndexTerm = size != 0 ? (logIter + args.prev_log_index)->term : 0;
 
-    auto success = size != 0 && lastTerm <= args.term &&
-      (size < 2 || prevIndexTerm == args.prev_log_term);
+    auto success = size != 0 && args.term >= currentTerm &&
+      (size <= 1 || prevIndexTerm == args.prev_log_term);
 
     if (success && args.entries.begin() != args.entries.end()) {
       if (args.prev_log_index == size - 1) {
@@ -31,9 +31,9 @@ namespace raft {
         ? args.leader_commit
         : log_.Size()-1;
     }
-    lastTerm = size == 0 ? 0 : logIter[size-1].term;
+    currentTerm = size != 0 ? logIter[size-1].term : 0;
     return AppendEntriesRes {
-      lastTerm,
+      currentTerm,
       success
     };
   }
@@ -42,16 +42,16 @@ namespace raft {
   AppendEntriesRes Node<Iter>::RequestVote(const RequestVoteArgs& args) {
     auto size = log_.Size();
     auto logIter = log_.Begin();
-    auto lastTerm = size == 0 ? 0 : logIter[size-1].term;
+    auto currentTerm = size != 0 ? (logIter + size -1)->term : 0;
 
-    auto success = lastTerm <= args.term &&
+    auto success = args.term >= currentTerm &&
       (voted_for_ == 0 || voted_for_ == args.candidate_id) &&
       IsLogUpToDate(args.last_log_index, args.last_log_term);
     if (success) {
       voted_for_ = args.candidate_id;
     }
     return AppendEntriesRes {
-      lastTerm,
+      currentTerm,
       success
     };
   }
