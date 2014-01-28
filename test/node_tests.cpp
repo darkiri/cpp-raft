@@ -231,4 +231,58 @@ namespace raft {
     EXPECT_TRUE(res.success);
   }
 
+  TEST_F(NodeTest, StartElection_IncrementCurrentTerm){
+    InMemoryLog log;
+    log.Append(CreateLogEntry(2));
+    InMemoryNode node(log);
+    node.StartElection();
+    EXPECT_EQ(3, node.GetCurrentTerm());
+  }
+
+  TEST_F(NodeTest, StartElection_ConvertsToCandidate){
+    InMemoryLog log;
+    InMemoryNode node(log);
+    node.StartElection();
+    EXPECT_EQ(CANDIDATE, node.GetState());
+  }
+
+  TEST_F(NodeTest, AppendEntries_FromNewLeader_ConvertToFollower) {
+    InMemoryLog log;
+    log.Append(CreateLogEntry(2));
+    InMemoryNode node(log);
+    node.StartElection();
+    auto args = MakeAppendArgs(4, 0, 2);
+    auto res = node.AppendEntries(args);
+    EXPECT_TRUE(res.success);
+    EXPECT_EQ(FOLLOWER, node.GetState());
+  }
+
+  TEST_F(NodeTest, KeepAlive_FromNewLeader_UpdateCurrentTerm) {
+    InMemoryLog log;
+    log.Append(CreateLogEntry(2));
+    InMemoryNode node(log);
+    auto args = MakeAppendArgs(3, 0, 2);
+    auto res = node.AppendEntries(args);
+    EXPECT_TRUE(res.success);
+    EXPECT_EQ(3, node.GetCurrentTerm());
+  }
+
+  TEST_F(NodeTest, RequestVote_FromNewLeader_UpdateCurrentTerm) {
+    InMemoryLog log;
+    log.Append(CreateLogEntry(2));
+    InMemoryNode node(log);
+    auto args = MakeRequestVoteArgs(3, 0, 0, 0);
+    node.RequestVote(args);
+    EXPECT_EQ(3, node.GetCurrentTerm());
+  }
+
+  TEST_F(NodeTest, RequestVote_FromNewLeader_ConvertToFollower) {
+    InMemoryLog log;
+    log.Append(CreateLogEntry(2));
+    InMemoryNode node(log);
+    node.StartElection();
+    auto args = MakeRequestVoteArgs(4, 0, 0, 0);
+    node.RequestVote(args);
+    EXPECT_EQ(FOLLOWER, node.GetState());
+  }
 }

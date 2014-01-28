@@ -49,13 +49,20 @@ namespace raft {
       unsigned int GetVotedFor() const {
         return voted_for_;
       }
+      unsigned int GetCurrentTerm() const {
+        return log_.Size() > 0 ? (--log_.End())->term : 0;
+      }
       AppendEntriesRes AppendEntries(const AppendEntriesArgs& args);
       AppendEntriesRes RequestVote(const RequestVoteArgs& args);
+
+      void StartElection();
     private:
       Node(const Node&);
       Node& operator=(const Node&);
 
       inline bool IsLogUpToDate(unsigned int index, unsigned int term) const;
+      inline void IncrementCurrentTerm(unsigned int newTerm);
+      inline void ConvertToFollower();
 
       NodeState state_;
       unsigned int commit_index_;

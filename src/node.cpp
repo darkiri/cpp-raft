@@ -12,6 +12,10 @@ namespace raft {
     auto success = size != 0 && args.term >= currentTerm &&
       (size <= 1 || prevIndexTerm == args.prev_log_term);
 
+    if (success && args.term > currentTerm){
+      ConvertToFollower();
+    }
+
     if (success && args.entries.begin() != args.entries.end()) {
       if (args.prev_log_index == size - 1) {
         log_.Append(args.entries.begin(), args.entries.end());
@@ -25,7 +29,10 @@ namespace raft {
         log_.Trim(nodeIter);
         log_.Append(masterIter, args.entries.end());
       }
+    } else if (success && args.term > currentTerm) {
+      IncrementCurrentTerm(args.term);
     }
+
     if (success) {
       commit_index_ = args.leader_commit < log_.Size()
         ? args.leader_commit
@@ -50,6 +57,10 @@ namespace raft {
     if (success) {
       voted_for_ = args.candidate_id;
     }
+    if (args.term > currentTerm) {
+      ConvertToFollower();
+      IncrementCurrentTerm(args.term);
+    }
     return AppendEntriesRes {
       currentTerm,
       success
@@ -63,5 +74,21 @@ namespace raft {
     return (log_.Size() == index + 1 && entry.term == term);
   }
 
+
+  template<class Iter>
+  void Node<Iter>::StartElection(){
+    state_ = CANDIDATE;
+    IncrementCurrentTerm(GetCurrentTerm()+1);
+  }
+
+  template<class Iter>
+  void Node<Iter>::IncrementCurrentTerm(unsigned int newTerm){
+    log_.Append( LogEntry { newTerm } );
+  }
+
+  template<class Iter>
+  void Node<Iter>::ConvertToFollower(){
+    state_ = FOLLOWER;
+  }
   template class Node<InMemoryLog>;
 }
