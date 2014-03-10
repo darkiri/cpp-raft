@@ -39,7 +39,7 @@ namespace raft {
   TEST_F(NodeTest, New_Node_Is_Follower) {
     InMemoryLog log;
     InMemoryNode node(log);
-    EXPECT_EQ(FOLLOWER, node.GetState());
+    EXPECT_EQ(NodeState::FOLLOWER, node.GetState());
   }
 
   TEST_F(NodeTest, New_Node_Commit_Index_0) {
@@ -243,7 +243,7 @@ namespace raft {
     InMemoryLog log;
     InMemoryNode node(log);
     node.StartElection();
-    EXPECT_EQ(CANDIDATE, node.GetState());
+    EXPECT_EQ(NodeState::CANDIDATE, node.GetState());
   }
 
   TEST_F(NodeTest, AppendEntries_FromNewLeader_ConvertToFollower) {
@@ -254,7 +254,7 @@ namespace raft {
     auto args = MakeAppendArgs(4, 0, 2);
     auto res = node.AppendEntries(args);
     EXPECT_TRUE(res.success);
-    EXPECT_EQ(FOLLOWER, node.GetState());
+    EXPECT_EQ(NodeState::FOLLOWER, node.GetState());
   }
 
   TEST_F(NodeTest, KeepAlive_FromNewLeader_UpdateCurrentTerm) {
@@ -283,6 +283,6 @@ namespace raft {
     node.StartElection();
     auto args = MakeRequestVoteArgs(4, 0, 0, 0);
     node.RequestVote(args);
-    EXPECT_EQ(FOLLOWER, node.GetState());
+    EXPECT_EQ(NodeState::FOLLOWER, node.GetState());
   }
 }

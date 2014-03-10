@@ -77,7 +77,7 @@ namespace raft {
 
   template<class Iter>
   void Node<Iter>::StartElection(){
-    state_ = CANDIDATE;
+    state_ = NodeState::CANDIDATE;
     IncrementCurrentTerm(GetCurrentTerm()+1);
   }
 
@@ -88,7 +88,7 @@ namespace raft {
 
   template<class Iter>
   void Node<Iter>::ConvertToFollower(){
-    state_ = FOLLOWER;
+    state_ = NodeState::FOLLOWER;
   }
   template class Node<InMemoryLog>;
 }

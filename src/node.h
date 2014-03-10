@@ -4,7 +4,7 @@
 #include "log.h"
 
 namespace raft {
-  enum NodeState {
+  enum class NodeState {
     FOLLOWER = 0,
     CANDIDATE = 1,
     LEADER = 2
@@ -35,7 +35,7 @@ namespace raft {
   class Node {
     public:
       Node(TLog& log):
-        state_(FOLLOWER),
+        state_(NodeState::FOLLOWER),
         commit_index_(0),
         voted_for_(0),
         log_(log) { };
