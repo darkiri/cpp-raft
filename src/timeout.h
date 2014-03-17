@@ -1,26 +1,30 @@
-#ifndef RAFT_TIMEOUT
-#define RAFT_TIMEOUT
+#ifndef TIMEOUT_RAFT
+#define TIMEOUT_RAFT
 
 #include <random>
 #include <chrono>
 
 namespace raft {
-  class Timeout{
+  class timeout{
     public:
       const unsigned int MIN = 150;
       const unsigned int MAX = 300;
 
-      Timeout() {
-        rnd_.seed(std::chrono::system_clock::now().time_since_epoch().count());
-        Reset();
+      timeout() {
+        auto time_since_epoch = 
+          std::chrono::system_clock::now()
+          .time_since_epoch()
+          .count();
+        rnd_.seed(time_since_epoch);
+        reset();
       }
 
-      unsigned int Get(){
+      unsigned int get(){
         return t_;
       }
 
       // not thread-safe
-      void Reset(){
+      void reset(){
         std::uniform_int_distribution<int> d(MIN, MAX);
         t_ = d(rnd_);
       }
