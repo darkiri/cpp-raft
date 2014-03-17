@@ -1,5 +1,5 @@
-#ifndef TIMEOUT_RAFT
-#define TIMEOUT_RAFT
+#ifndef RAFT_TIMEOUT
+#define RAFT_TIMEOUT
 
 #include <random>
 #include <chrono>
