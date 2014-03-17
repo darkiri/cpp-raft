@@ -10,7 +10,7 @@ namespace raft {
       const unsigned int MIN = 150;
       const unsigned int MAX = 300;
 
-      timeout() {
+      timeout() : rnd_() {
         auto time_since_epoch = 
           std::chrono::system_clock::now()
           .time_since_epoch()
