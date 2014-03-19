@@ -1,0 +1,15 @@
+package raft;
+
+message log_entry {
+    required uint64 term = 1;
+}
+message append_entries {
+    message request {
+        required uint64 term = 1;
+        repeated log_entry entries = 2;
+    }
+    message response {
+        required uint64 term = 1;
+        required bool success = 2;
+    }
+}

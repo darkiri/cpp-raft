@@ -23,7 +23,9 @@ flags = [
 '-I',
 'src',
 '-I',
-'gtest/include'
+'gtest/include',
+'-I',
+'build/raft/proto'
 ]
 
 # Set this to the absolute path to the folder (NOT the file!) containing the

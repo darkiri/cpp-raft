@@ -1,4 +1,6 @@
-env = Environment()
+env = Environment(
+       tools=['default', 'protoc'])
+
 Export('env')
 
 env.Prepend(

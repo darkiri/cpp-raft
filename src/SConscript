@@ -1,7 +1,16 @@
 Import('env')
 
+proto_files = env.Protoc(
+    [],
+    'proto/raft.proto',
+    PROTOCPROTOPATH = [],
+    PROTOCPYTHONOUTDIR = None,
+    PROTOCOUTDIR = '.',
+)
 raft_o = env.StaticObject(
         ["node.cpp", "log.cpp"])
+
+Depends(raft_o, proto_files)
 
 env.StaticLibrary("raft", source = raft_o)
 
