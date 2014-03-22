@@ -1,14 +1,15 @@
+import os
 Import('env')
 
 proto_files = env.Protoc(
-    [],
-    'proto/raft.proto',
-    PROTOCPROTOPATH = [],
+    [os.path.splitext('proto/raft.proto')[0] + '.pb.cc'],
+    ['proto/raft.proto'],
+    PROTOCPROTOPATH = ["build/raft/proto"],
     PROTOCPYTHONOUTDIR = None,
-    PROTOCOUTDIR = '.',
+    PROTOCOUTDIR = "build/raft/proto",
 )
 raft_o = env.StaticObject(
-        ["node.cpp", "log.cpp"])
+        ["node.cpp", "log.cpp", "proto/raft.pb.cc"])
 
 Depends(raft_o, proto_files)
 
