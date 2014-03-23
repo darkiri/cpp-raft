@@ -1,4 +1,4 @@
-Import('env')
+Import('env', 'raft_o')
 
 PhonyTargets(env, gtest_svn = 'svn checkout http://googletest.googlecode.com/svn/trunk/ gtest')
 
@@ -9,7 +9,7 @@ env.StaticObject("gtest-all.o",
         CXXFLAGS = "-std=c++0x")
 
 env.Program("test", 
-        source = (["test_runner.cpp", "node_tests.cpp", "log_tests.cpp", "gtest-all.o"]), 
-        LIBS = ["pthread", "protobuf", "raft"],
+        source = (["test_runner.cpp", "node_tests.cpp", "log_tests.cpp", "tcp_server_tests.cpp", "gtest-all.o"] + raft_o), 
+        LIBS = ["pthread", "protobuf"],
         LIBPATH = ["#build/raft"],
-        CPPPATH = ["#gtest/include", "#src"])
+        CPPPATH = ["#gtest/include", "#src", "#build/raft"])

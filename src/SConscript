@@ -1,15 +1,13 @@
-import os
-Import('env')
+Import('env', 'raft_o')
 
 proto_files = env.Protoc(
-    [os.path.splitext('proto/raft.proto')[0] + '.pb.cc'],
+    ['proto/raft.pb.cc', 'proto/raft.pb.h'],
     ['proto/raft.proto'],
     PROTOCPROTOPATH = ["build/raft/proto"],
     PROTOCPYTHONOUTDIR = None,
     PROTOCOUTDIR = "build/raft/proto",
 )
-raft_o = env.StaticObject(
-        ["node.cpp", "log.cpp", "proto/raft.pb.cc"])
+raft_o.extend(env.StaticObject( ["node.cpp", "log.cpp", "tcp_server.cpp", "proto/raft.pb.cc"]))
 
 Depends(raft_o, proto_files)
 
