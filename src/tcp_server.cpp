@@ -2,38 +2,74 @@
 #include "rpc.h"
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ip/tcp.hpp>
-#include <boost/bind.hpp>
+#include <thread>
+#include <functional>
 
-using boost::asio::ip::tcp;
+using namespace std;
+using namespace std::placeholders;
+using namespace boost::asio;
+using namespace boost::system;
+
 namespace raft {
   namespace rpc {
-    namespace tcp1 {
-      void server::run() {
-        try {
-
-          start_accept();
-          this->io_service_.run();
+    class tcp_connection {
+      public:
+        static shared_ptr<tcp_connection> create(tcp_socket socket) {
+          return shared_ptr<tcp_connection>(new tcp_connection(std::move(socket)));
         }
-        catch (std::exception& e) {
-          std::cerr << e.what() << std::endl;
+        tcp_socket& socket() {
+          return socket_;
         }
-      }
+      private:
+        tcp_connection(tcp_socket socket): socket_(move(socket)), message_() {}
+        tcp_socket socket_;
+        string message_;
+    };
 
-      void server::start_accept(){
-        this->acceptor_.async_accept(this->socket_, boost::bind(&server::handle_accept, this, boost::asio::placeholders::error));
+    void handle_write(const error_code& error, size_t /*bytes_transferred*/) {
+      if (error) {
+        cerr << "Error writing to socket: " << error.value() << " - " << error.message() << endl;
       }
+    }
 
-      void server::handle_accept(const boost::system::error_code& error) {
-        if (!error) {
-          append_handler_(append_entries_request());
-          boost::asio::async_write(this->socket_, boost::asio::buffer("Hello, World!\r\n"),
-              [](const boost::system::error_code&, size_t){});
-          start_accept();
-        } else {
-          std::cout<<"error: " << error <<std::endl;
+    void tcp::server::run() {
+      start_accept();
+      try {
+        for (size_t i = 0; i < THREAD_POOL_SIZE; i++) {
+          thread_pool_[i] = shared_ptr<thread>(
+              new thread([this](){ io_service_.run();}));
         }
+      } catch (exception& e) {
+        cerr << e.what() << endl;
       }
-      void server::handle_write(const boost::system::error_code&, size_t){
+    }
+
+    void tcp::server::stop() {
+      io_service_.stop();
+      for (size_t i = 0; i < THREAD_POOL_SIZE; i++) {
+        thread_pool_[i]->join();
+      }
+    }
+
+    void tcp::server::start_accept(){
+      auto conn = tcp_connection::create(move(socket_));
+      auto handler = bind(&server::handle_accept, this, conn, _1);
+      acceptor_.async_accept(conn->socket(), handler);
+    }
+
+    void tcp::server::handle_accept(
+        shared_ptr<tcp_connection> conn,
+        const error_code& error) {
+      if (!error) {
+        auto res = append_handler_(append_entries_request());
+        boost::asio::streambuf b;
+        ostream os(&b);
+        res.SerializeToOstream(&os);
+        auto handler = bind(handle_write, _1, _2);
+        async_write(conn->socket(), b, handler);
+        start_accept();
+      } else {
+        std::cerr << "Error accepting connection: " << error.value() << " - " << error.message() << endl;
       }
     }
   }
