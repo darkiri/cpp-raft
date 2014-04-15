@@ -1,18 +1,15 @@
 #ifndef RAFT_RPC
 #define RAFT_RPC
 
+#include <memory>
+
 #include "proto/raft.pb.h"
 #include "timeout.h"
-#include "node.h"
-
-#include <array>
-#include <thread>
 
 namespace raft {
   namespace rpc {
     typedef std::function<append_entries_response(const append_entries_request&)> append_handler;
 
-    class tcp_connection;
     class tcp {
       public:
         class server {

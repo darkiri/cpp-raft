@@ -1,9 +1,9 @@
 #include <iostream>
-#include <boost/asio.hpp>
 #include <thread>
 #include <functional>
 
 #include "rpc.h"
+#include "tcp_connection.h"
 
 namespace raft {
   namespace rpc {
@@ -12,10 +12,6 @@ namespace raft {
     using namespace std::placeholders;
     using namespace boost::asio;
     using namespace boost::system;
-
-    typedef boost::asio::ip::tcp::endpoint tcp_endpoint;
-    typedef boost::asio::ip::tcp::acceptor tcp_acceptor;
-    typedef boost::asio::ip::tcp::socket tcp_socket;
 
     struct tcp::server::impl {
       public:
@@ -51,19 +47,6 @@ namespace raft {
         tcp_socket socket_;
     };
 
-    class tcp_connection {
-      public:
-        static shared_ptr<tcp_connection> create(tcp_socket socket) {
-          return shared_ptr<tcp_connection>(new tcp_connection(move(socket)));
-        }
-        tcp_socket& socket() {
-          return socket_;
-        }
-      private:
-        tcp_connection(tcp_socket socket): socket_(move(socket)) {}
-        tcp_socket socket_;
-    };
-
     void tcp::server::impl::run() {
       start_accept();
       try {
@@ -84,27 +67,16 @@ namespace raft {
     }
 
     void tcp::server::impl::start_accept(){
-      auto conn = tcp_connection::create(move(socket_));
+      auto conn = tcp_connection::create(move(socket_), handler_);
       auto handler = bind(&impl::handle_accept, this, conn, _1);
       acceptor_.async_accept(conn->socket(), handler);
-    }
-
-    void handle_write(const error_code& error, size_t /*bytes_transferred*/) {
-      if (error) {
-        cerr << "Error writing to socket: " << error.value() << " - " << error.message() << endl;
-      }
     }
 
     void tcp::server::impl::handle_accept(
         shared_ptr<tcp_connection> conn,
         const error_code& error) {
       if (!error) {
-        auto res = handler_(append_entries_request());
-        boost::asio::streambuf b;
-        ostream os(&b);
-        res.SerializeToOstream(&os);
-        auto handler = bind(handle_write, _1, _2);
-        async_write(conn->socket(), b, handler);
+        conn->start();
         start_accept();
       } else {
         std::cerr << "Error accepting connection: " << error.value() << " - " << error.message() << endl;
