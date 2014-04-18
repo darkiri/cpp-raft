@@ -7,7 +7,14 @@ proto_files = env.Protoc(
     PROTOCPYTHONOUTDIR = None,
     PROTOCOUTDIR = "build/raft/proto",
 )
-raft_o.extend(env.StaticObject( ["node.cpp", "log.cpp", "tcp_server.cpp", "tcp_connection.cpp", "proto/raft.pb.cc"]))
+raft_o.extend(env.StaticObject([
+    "node.cpp",
+    "log.cpp",
+    "tcp_server.cpp",
+    "tcp_connection.cpp",
+    "tcp_client.cpp",
+    "proto/raft.pb.cc"
+    ]))
 
 Depends(raft_o, proto_files)
 

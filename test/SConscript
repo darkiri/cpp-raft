@@ -19,3 +19,9 @@ env.Program("tcp_server",
         LIBS = ["pthread", "protobuf", "boost_system"],
         LIBPATH = ["#build/raft"],
         CPPPATH = ["#gtest/include", "#src", "#build/raft"])
+
+env.Program("tcp_client", 
+        source = (["tcp_client.cpp"] + raft_o), 
+        LIBS = ["pthread", "protobuf", "boost_system"],
+        LIBPATH = ["#build/raft"],
+        CPPPATH = ["#gtest/include", "#src", "#build/raft"])
