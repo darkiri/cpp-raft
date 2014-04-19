@@ -62,7 +62,9 @@ namespace raft {
     void tcp::server::impl::stop() {
       ios_.stop();
       for (size_t i = 0; i < THREAD_POOL_SIZE; i++) {
-        thread_pool_[i]->join();
+        try {
+          thread_pool_[i]->join();
+        } catch (const system_error& ) { /* suppress */ };
       }
     }
 

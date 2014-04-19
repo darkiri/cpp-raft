@@ -5,8 +5,9 @@
 using namespace std;
 using namespace raft;
 
-append_entries_response test_handler(const append_entries_request&) {
-  std::cout<<"append entries handler"<<std::endl;
+append_entries_response test_handler(const append_entries_request& r) {
+  cout << "append entries handler" << endl;
+  cout << "request: term=" << r.term() << endl;
   append_entries_response res;
   res.set_term(2);
   res.set_success(true);

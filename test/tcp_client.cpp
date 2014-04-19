@@ -15,6 +15,7 @@ int main() {
   timeout t;
   rpc::tcp::client c(config, t);
   append_entries_request r;
+  r.set_term(223);
   c.append_entries_async(r, on_appended);
   char* tmp = 0;
   cin.getline(tmp, 0);

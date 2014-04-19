@@ -1,6 +1,7 @@
 #ifndef RAFT_TCP_CONNECTION
 #define RAFT_TCP_CONNECTION
 
+#include <memory>
 #include <boost/asio.hpp>
 
 #include "rpc.h"
@@ -11,7 +12,7 @@ namespace raft {
     typedef boost::asio::ip::tcp::acceptor tcp_acceptor;
     typedef boost::asio::ip::tcp::socket tcp_socket;
 
-    class tcp_connection {
+    class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
       public:
         static std::shared_ptr<tcp_connection> create(tcp_socket socket, append_handler h) {
           return std::shared_ptr<tcp_connection>(new tcp_connection(std::move(socket), h));
@@ -25,6 +26,7 @@ namespace raft {
           socket_(std::move(socket)),
           handler_(h) {}
 
+        void handle_read(const boost::system::error_code&, std::shared_ptr<char>, int);
         void handle_write(const boost::system::error_code&, size_t /*bytes_transferred*/);
 
         tcp_socket socket_;
