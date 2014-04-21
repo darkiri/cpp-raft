@@ -17,17 +17,13 @@ namespace raft {
         r.ParseFromArray(payload.get(), size);
         auto res = handler_(r);
 
-        auto message_size = res.ByteSize() + tcp::HEADER_LENGTH;
-        auto data = shared_ptr<char>(new char[message_size]);
-        serialize_int(data.get(), res.ByteSize());
-        res.SerializeToArray(data.get() + tcp::HEADER_LENGTH, res.ByteSize());
-        cout << "sending " << message_size << " bytes" << endl;
+        auto data = pack(res);
 
         auto self = shared_from_this();
         auto handler = [this, self](const error_code& error, size_t s) {
           self->handle_write(error, s);
         };
-        async_write(socket_, buffer(data.get(), message_size), handler);
+        async_write(socket_, buffer(data.get(), get_size(res)), handler);
       } else {
         cerr << "Error reading from socket: " << error.value() << " - " << error.message() << endl;
       }

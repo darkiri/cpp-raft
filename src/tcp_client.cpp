@@ -65,15 +65,11 @@ namespace raft {
     };
 
     void tcp::client::impl::append_entries_async(const append_entries_request& r, on_appended_handler h) {
-      auto message_size = r.ByteSize() + HEADER_LENGTH;
-      auto data = shared_ptr<char>(new char[message_size]);
-      serialize_int(data.get(), r.ByteSize());
-      r.SerializeToArray(data.get() + HEADER_LENGTH, r.ByteSize());
-      cout << "sending " << message_size << " bytes" << endl;
+      auto data = pack(r);
       auto handler = [this, h, data] (const error_code& ec, size_t s) {
         handle_write(ec, s, h);
       };
-      async_write(socket_, buffer(data.get(), message_size), handler);
+      async_write(socket_, buffer(data.get(), get_size(r)), handler);
     }
 
     void tcp::client::impl::handle_write(const error_code& error, size_t /*bytes_transferred*/, on_appended_handler h) {

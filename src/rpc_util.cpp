@@ -17,5 +17,17 @@ namespace raft {
       }
       return res;
     }
+
+    inline int get_size(const google::protobuf::Message& m) {
+      return tcp::HEADER_LENGTH + m.ByteSize();
+    }
+
+    std::shared_ptr<char> pack(const google::protobuf::Message& m) {
+      auto message_size = get_size(m);
+      auto data = std::shared_ptr<char>(new char[message_size]);
+      serialize_int(data.get(), m.ByteSize());
+      m.SerializeToArray(data.get() + tcp::HEADER_LENGTH, m.ByteSize());
+      return data;
+    }
   }
 }
