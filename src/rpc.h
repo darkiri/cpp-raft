@@ -13,6 +13,8 @@ namespace raft {
 
     class tcp {
       public:
+        const static int HEADER_LENGTH = 4;
+
         class server {
           public:
             server(const config_server& c, append_handler h); 
@@ -37,6 +39,9 @@ namespace raft {
             std::unique_ptr<impl> pimpl_;
         };
     };
+
+    void serialize_int(char* data, int n);
+    int deserialize_int(std::array<char, tcp::HEADER_LENGTH> data);
   }
 }
 #endif

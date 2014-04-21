@@ -64,18 +64,11 @@ namespace raft {
       } catch (const system_error& ) { /* suppress */ };
     };
 
-    void serialize_int(char* data, int n) {
-      data[0] = (n >> 24) & 0xFF;
-      data[1] = (n >> 16) & 0xFF;
-      data[2] = (n >> 8) & 0xFF;
-      data[3] = n & 0xFF;
-    }
-
     void tcp::client::impl::append_entries_async(const append_entries_request& r, on_appended_handler h) {
-      auto message_size = r.ByteSize()+4;
+      auto message_size = r.ByteSize() + HEADER_LENGTH;
       auto data = shared_ptr<char>(new char[message_size]);
       serialize_int(data.get(), r.ByteSize());
-      r.SerializeToArray(data.get() + 4, r.ByteSize());
+      r.SerializeToArray(data.get() + HEADER_LENGTH, r.ByteSize());
       cout << "sending " << message_size << " bytes" << endl;
       auto handler = [this, h, data] (const error_code& ec, size_t s) {
         handle_write(ec, s, h);
@@ -83,20 +76,12 @@ namespace raft {
       async_write(socket_, buffer(data.get(), message_size), handler);
     }
 
-    int deserialize_int1(array<char, 4> data) {
-      auto res = 0;
-      for (auto i = 0; i < 4; i++){
-        res += res*256 + data[i];
-      }
-      return res;
-    }
-
     void tcp::client::impl::handle_write(const error_code& error, size_t /*bytes_transferred*/, on_appended_handler h) {
       if (!error) {
         cout << "written" << endl;
-        array<char, 4> data;
-        boost::asio::read(socket_, boost::asio::buffer(&data, 4));
-        size_t size = deserialize_int1(data);
+        array<char, HEADER_LENGTH> data;
+        read(socket_, buffer(&data, HEADER_LENGTH));
+        size_t size = deserialize_int(data);
         cout <<  "payload size: " << size << endl;
         auto payload = shared_ptr<char>(new char[size]);
         auto handler = [this, payload, h] (const error_code& ec, size_t size) {

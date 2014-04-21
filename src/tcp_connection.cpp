@@ -10,21 +10,6 @@ namespace raft {
     using namespace boost::asio;
     using namespace boost::system;
 
-    int deserialize_int(array<char, 4> data) {
-      auto res = 0;
-      for (auto i = 0; i < 4; i++){
-        res += res*256 + data[i];
-      }
-      return res;
-    }
-
-    void serialize_int1(char* data, int n) {
-      data[0] = (n >> 24) & 0xFF;
-      data[1] = (n >> 16) & 0xFF;
-      data[2] = (n >> 8) & 0xFF;
-      data[3] = n & 0xFF;
-    }
-
     void tcp_connection::handle_read(const error_code& error, shared_ptr<char> payload, int size) {
       if (!error) {
         cout << "handle read " << size << " bytes" << endl;
@@ -32,10 +17,10 @@ namespace raft {
         r.ParseFromArray(payload.get(), size);
         auto res = handler_(r);
 
-        auto message_size = res.ByteSize() + 4;
+        auto message_size = res.ByteSize() + tcp::HEADER_LENGTH;
         auto data = shared_ptr<char>(new char[message_size]);
-        serialize_int1(data.get(), res.ByteSize());
-        res.SerializeToArray(data.get() + 4, res.ByteSize());
+        serialize_int(data.get(), res.ByteSize());
+        res.SerializeToArray(data.get() + tcp::HEADER_LENGTH, res.ByteSize());
         cout << "sending " << message_size << " bytes" << endl;
 
         auto self = shared_from_this();
@@ -49,8 +34,8 @@ namespace raft {
     }
     void tcp_connection::start(){
       cout << "connection started" << endl;
-      array<char, 4> data;
-      boost::asio::read(socket_, boost::asio::buffer(&data, 4));
+      array<char, tcp::HEADER_LENGTH> data;
+      read(socket_, buffer(&data, tcp::HEADER_LENGTH));
       size_t size = deserialize_int(data);
       cout <<  "payload size: " << size << endl;
       auto self = shared_from_this();
