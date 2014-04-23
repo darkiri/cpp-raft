@@ -26,9 +26,6 @@ namespace raft {
           socket_(std::move(socket)),
           handler_(h) {}
 
-        void handle_read(const boost::system::error_code&, std::shared_ptr<char>, int);
-        void handle_write(const boost::system::error_code&, size_t /*bytes_transferred*/);
-
         tcp_socket socket_;
         append_handler handler_;
     };

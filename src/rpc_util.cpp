@@ -1,7 +1,12 @@
-#include "rpc.h"
+#include <memory>
+#include "rpc_util.h"
 
 namespace raft {
   namespace rpc {
+
+    using namespace std;
+    using namespace boost::asio;
+    using namespace boost::system;
 
     void serialize_int(char* data, int n) {
       data[0] = (n >> 24) & 0xFF;
