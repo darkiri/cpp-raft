@@ -39,11 +39,6 @@ namespace raft {
             std::unique_ptr<impl> pimpl_;
         };
     };
-
-    void serialize_int(char* data, int n);
-    int deserialize_int(std::array<char, tcp::HEADER_LENGTH> data);
-    int get_size(const google::protobuf::Message& m);
-    std::shared_ptr<char> pack(const google::protobuf::Message& m);
   }
 }
 #endif

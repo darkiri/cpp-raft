@@ -8,8 +8,6 @@
 
 namespace raft {
   namespace rpc {
-    typedef boost::asio::ip::tcp::endpoint tcp_endpoint;
-    typedef boost::asio::ip::tcp::acceptor tcp_acceptor;
     typedef boost::asio::ip::tcp::socket tcp_socket;
 
     class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
@@ -24,10 +22,12 @@ namespace raft {
       private:
         tcp_connection(tcp_socket socket, append_handler h) :
           socket_(std::move(socket)),
-          handler_(h) {}
+          handler_(h),
+          response_() {}
 
         tcp_socket socket_;
         append_handler handler_;
+        append_entries_response response_;
     };
   }
 }

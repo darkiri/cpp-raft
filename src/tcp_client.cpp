@@ -6,7 +6,7 @@
 #include <boost/asio.hpp>
 
 #include "rpc.h"
-#include "rpc_util.h"
+#include "tcp_util.h"
 
 namespace raft {
   namespace rpc {
@@ -15,6 +15,8 @@ namespace raft {
     using namespace std::placeholders;
     using namespace boost::asio;
     using namespace boost::system;
+
+    typedef boost::asio::ip::tcp::resolver tcp_resolver;
 
     struct tcp::client::impl {
       public:

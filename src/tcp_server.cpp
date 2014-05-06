@@ -4,6 +4,7 @@
 
 #include "rpc.h"
 #include "tcp_connection.h"
+#include "tcp_util.h"
 
 namespace raft {
   namespace rpc {
@@ -12,6 +13,9 @@ namespace raft {
     using namespace std::placeholders;
     using namespace boost::asio;
     using namespace boost::system;
+
+    typedef boost::asio::ip::tcp::endpoint tcp_endpoint;
+    typedef boost::asio::ip::tcp::acceptor tcp_acceptor;
 
     struct tcp::server::impl {
       public:

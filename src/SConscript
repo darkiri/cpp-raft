@@ -13,7 +13,6 @@ raft_o.extend(env.StaticObject([
     "tcp_server.cpp",
     "tcp_connection.cpp",
     "tcp_client.cpp",
-    "rpc_util.cpp",
     "proto/raft.pb.cc"
     ]))
 
