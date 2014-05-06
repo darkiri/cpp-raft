@@ -63,7 +63,7 @@ namespace raft {
     };
 
     void tcp::client::impl::append_entries_async(const append_entries_request& r, on_appended_handler h) {
-      auto handler = [this, h](const append_entries_request&) {
+      auto handler = [this, h]() {
         read_message<append_entries_response>(socket_, h);
       };
       write_message<append_entries_request>(socket_, r, handler);

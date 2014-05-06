@@ -38,12 +38,12 @@ namespace raft {
     }
 
     template<typename Message>
-    void write_message(tcp_socket& s, const Message& request, std::function<void(const Message&)> h) {
+    void write_message(tcp_socket& s, const Message& request, std::function<void()> h) {
       auto data = pack(request);
-      auto handler = [data, &request, h] (const boost::system::error_code& ec, size_t size) {
+      auto handler = [data, h] (const boost::system::error_code& ec, size_t size) {
         if (!ec) {
           std::cout << "Writing completed: " << size << " bytes" << std::endl;
-          h(request);
+          h();
         } else {
           std::cerr << "Error writing to socket: " << ec.value() << " - " << ec.message() << std::endl;
         }
