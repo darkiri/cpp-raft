@@ -42,7 +42,7 @@ namespace raft {
 
         ~impl();
 
-        void append_entries_async(const append_entries_request&, on_appended_handler);
+        void append_entries_async(const append_entries_request&, appended_handler, timeout_handler);
 
       private:
 
@@ -62,9 +62,9 @@ namespace raft {
       } catch (const system_error& ) { /* suppress */ };
     };
 
-    void tcp::client::impl::append_entries_async(const append_entries_request& r, on_appended_handler h) {
-      auto handler = [this, h]() {
-        read_message<append_entries_response>(socket_, h);
+    void tcp::client::impl::append_entries_async(const append_entries_request& r, appended_handler ah, timeout_handler) {
+      auto handler = [this, ah]() {
+        read_message<append_entries_response>(socket_, ah);
       };
       write_message<append_entries_request>(socket_, r, handler);
     }
@@ -72,8 +72,8 @@ namespace raft {
     tcp::client::client(const config_server& c, const timeout& t) :
       pimpl_(new tcp::client::impl(c, t)) {} 
 
-    void tcp::client::append_entries_async(const append_entries_request& r, on_appended_handler h) {
-      pimpl_->append_entries_async(r, h);
+    void tcp::client::append_entries_async(const append_entries_request& r, appended_handler ah, timeout_handler th) {
+      pimpl_->append_entries_async(r, ah, th);
     }
 
     tcp::client::~client() = default;

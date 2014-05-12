@@ -9,7 +9,8 @@
 namespace raft {
   namespace rpc {
     typedef std::function<append_entries_response(const append_entries_request&)> append_handler;
-    typedef std::function<void(const append_entries_response&)> on_appended_handler;
+    typedef std::function<void(const append_entries_response&)> appended_handler;
+    typedef std::function<void()> timeout_handler;
 
     class tcp {
       public:
@@ -33,7 +34,7 @@ namespace raft {
             client(const config_server& c, const timeout& t);
             ~client();
 
-            void append_entries_async(const append_entries_request&, on_appended_handler h);
+            void append_entries_async(const append_entries_request&, appended_handler, timeout_handler);
           private:
             struct impl;
             std::unique_ptr<impl> pimpl_;
