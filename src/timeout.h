@@ -19,7 +19,7 @@ namespace raft {
         reset();
       }
 
-      unsigned int get(){
+      unsigned int get() const {
         return t_;
       }
 

@@ -84,7 +84,7 @@ namespace raft {
 
       mutex mtx;
       unique_lock<mutex> lck(mtx);
-      auto res = timeout_.wait_for(lck, chrono::seconds(1));
+      auto res = timeout_.wait_for(lck, chrono::seconds(5));
       if (res == cv_status::timeout) {
         FAIL();
       }

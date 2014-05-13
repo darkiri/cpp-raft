@@ -72,6 +72,33 @@ namespace raft {
       std::cout <<  "Reading payload: " << size << " bytes" << std::endl;
       async_read(s, boost::asio::buffer(payload.get(), size), handler);
     }
+
+    inline std::shared_ptr<boost::asio::deadline_timer> create_deadline(boost::asio::io_service& ios, timeout t, timeout_handler h) {
+      auto timer = std::shared_ptr<boost::asio::deadline_timer>(new boost::asio::deadline_timer(ios));
+      timer->expires_from_now(boost::posix_time::milliseconds(t.get()));
+      timer->async_wait([timer, h] (const boost::system::error_code& ec) {
+        if (!ec) {
+          h();
+        } else {
+          std::cerr << "Error waiting on socket: " << ec.value() << " - " << ec.message() << std::endl;
+        }
+      });
+      return timer;
+    }
+
+    inline void extend_deadline(std::shared_ptr<boost::asio::deadline_timer> timer, timeout t, timeout_handler h) {
+      if (timer->expires_from_now(boost::posix_time::milliseconds(t.get()))) {
+        timer->async_wait([timer, h] (const boost::system::error_code& ec) {
+          if (!ec) {
+            h();
+          } else {
+            std::cerr << "Error waiting on socket: " << ec.value() << " - " << ec.message() << std::endl;
+          }
+        });
+      } else {
+          std::cerr << "Timeout already expired" << std::endl;
+      }
+    }
   }
 }
 #endif

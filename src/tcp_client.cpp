@@ -45,7 +45,6 @@ namespace raft {
         void append_entries_async(const append_entries_request&, appended_handler, timeout_handler);
 
       private:
-
         const config_server& config_;
         const timeout& timeout_;
 
@@ -62,9 +61,14 @@ namespace raft {
       } catch (const system_error& ) { /* suppress */ };
     };
 
-    void tcp::client::impl::append_entries_async(const append_entries_request& r, appended_handler ah, timeout_handler) {
-      auto handler = [this, ah]() {
-        read_message<append_entries_response>(socket_, ah);
+    void tcp::client::impl::append_entries_async(const append_entries_request& r, appended_handler ah, timeout_handler th) {
+      auto deadline = create_deadline(ios_, timeout_, th);
+      auto handler = [this, ah, deadline, th]() {
+        extend_deadline(deadline, timeout_, th);
+        read_message<append_entries_response>(socket_, [deadline, ah, th](append_entries_response r) {
+            deadline->cancel();
+            ah(r);
+          });
       };
       write_message<append_entries_request>(socket_, r, handler);
     }
