@@ -5,6 +5,7 @@
 #include <chrono>
 #include "proto/raft.pb.h"
 #include "rpc.h"
+#include <boost/asio.hpp>
 
 namespace raft {
   namespace rpc {
@@ -39,7 +40,7 @@ namespace raft {
     }
 
     void TcpServerTest::on_timeout() {
-      cout << "timeout in append entries "<< endl;
+      cout << this_thread::get_id() << " timeout in append entries "<< endl;
       timeout_.notify_one();
     }
 
@@ -71,10 +72,29 @@ namespace raft {
       s.stop();
     }
 
+    TEST_F(TcpServerTest, ClientFailsFastWithoutServer) {
+      config_server conf;
+      conf.set_id(1);
+      conf.set_port(7574);
+
+      timeout t;
+      EXPECT_THROW(rpc::tcp::client(conf, t), boost::system::system_error);
+    }
+
     TEST_F(TcpServerTest, ClientTimeoutTest_AppenEntries) {
       config_server conf;
       conf.set_id(1);
       conf.set_port(7574);
+      rpc::tcp::server s(conf, [](const append_entries_request&) {
+          append_entries_response res;
+          cout << this_thread::get_id() << " wait for 1 sec" << endl;
+          this_thread::sleep_for(chrono::seconds(1));
+          cout << this_thread::get_id() << " after 1 sec" << endl;
+          res.set_term(2);
+          res.set_success(true);
+          return res;
+          });
+      s.run();
 
       timeout t;
       rpc::tcp::client c(conf, t);
@@ -85,8 +105,9 @@ namespace raft {
       mutex mtx;
       unique_lock<mutex> lck(mtx);
       auto res = timeout_.wait_for(lck, chrono::seconds(5));
+      s.stop();
       if (res == cv_status::timeout) {
-        FAIL();
+        FAIL() << "Client haven't produced expected timeout.";
       }
     }
   }

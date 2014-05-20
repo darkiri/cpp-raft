@@ -91,8 +91,8 @@ namespace raft {
         timer->async_wait([timer, h] (const boost::system::error_code& ec) {
           if (!ec) {
             h();
-          } else {
-            std::cerr << "Error waiting on socket: " << ec.value() << " - " << ec.message() << std::endl;
+          } else if (ec != boost::asio::error::operation_aborted) {
+            std::cerr << "Error waiting on timer: " << ec.value() << " - " << ec.message() << std::endl;
           }
         });
       } else {

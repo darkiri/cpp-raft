@@ -25,19 +25,18 @@ namespace raft {
           timeout_(t),
           ios_(),
           work_(ios_),
-          socket_(ios_) { 
-            try {
-              tcp_resolver resolver(ios_);
-              tcp_resolver::query query(config_.host(), to_string(config_.port()));
-              auto iterator = resolver.resolve(query);
+          socket_(ios_),
+          threads_(){ 
+            tcp_resolver resolver(ios_);
+            tcp_resolver::query query(config_.host(), to_string(config_.port()));
+            auto iterator = resolver.resolve(query);
 
-              connect(socket_, iterator);
-            } catch (const system_error& e) {
-              cerr << e.what() << endl;
+            connect(socket_, iterator);
+
+            for (size_t i = 0; i < threads_.size(); i++) {
+              threads_[i] = shared_ptr<thread>(
+                  new thread([this](){ ios_.run();}));
             }
-
-            call_thread_ = shared_ptr<thread>(
-                new thread([this](){ ios_.run();}));
           }
 
         ~impl();
@@ -51,14 +50,16 @@ namespace raft {
         io_service ios_;
         io_service::work work_;
         tcp_socket socket_;
-        shared_ptr<thread> call_thread_;
+        array<shared_ptr<thread>, 2> threads_;
     };
 
     tcp::client::impl::~impl() {
       ios_.stop();
-      try {
-        call_thread_->join();
-      } catch (const system_error& ) { /* suppress */ };
+      for (size_t i = 0; i < threads_.size(); i++) {
+        try {
+          threads_[i]->join();
+        } catch (const system_error& ) { /* suppress */ };
+      }
     };
 
     void tcp::client::impl::append_entries_async(const append_entries_request& r, appended_handler ah, timeout_handler th) {
