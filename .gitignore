@@ -6,3 +6,4 @@ build
 cscope.*.out
 cscope.out
 cscope.files
+tags
