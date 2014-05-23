@@ -4,6 +4,7 @@
 #include <iostream>
 #include <boost/asio.hpp>
 #include "rpc.h"
+#include "logging.h"
 
 namespace raft {
   namespace rpc {
@@ -42,34 +43,34 @@ namespace raft {
       auto data = pack(request);
       auto handler = [data, h] (const boost::system::error_code& ec, size_t size) {
         if (!ec) {
-          std::cout << "Writing completed: " << size << " bytes" << std::endl;
+          LOG_TRACE << "Writing completed: " << size << " bytes";
           h();
         } else {
-          std::cerr << "Error writing to socket: " << ec.value() << " - " << ec.message() << std::endl;
+          LOG_ERROR << "Error writing to socket: " << ec.value() << " - " << ec.message();
         }
       };
-      std::cout <<  "Writing: " << get_size(request) << " bytes" << std::endl;
+      LOG_TRACE <<  "Writing: " << get_size(request) << " bytes";
       async_write(s, boost::asio::buffer(data.get(), get_size(request)), handler);
     }
 
     template<typename Message>
     void read_message(tcp_socket& s, std::function<void(const Message&)> h) {
       std::array<char, tcp::HEADER_LENGTH> data;
-      std::cout <<  "Reading header: " << tcp::HEADER_LENGTH << " bytes" << std::endl;
+      LOG_TRACE <<  "Reading header: " << tcp::HEADER_LENGTH << " bytes";
       read(s, boost::asio::buffer(&data, tcp::HEADER_LENGTH));
       auto size = deserialize_int(data);
       auto payload = std::shared_ptr<char>(new char[size]);
       auto handler = [payload, h] (const boost::system::error_code& ec, size_t size) {
         if (!ec) {
-          std::cout << "Reading completed: " << size << " bytes" << std::endl;
+          LOG_TRACE << "Reading completed: " << size << " bytes";
           Message message;
           message.ParseFromArray(payload.get(), size);
           h(message);
         } else {
-          std::cerr << "Error reading from socket: " << ec.value() << " - " << ec.message() << std::endl;
+          LOG_ERROR << "Error reading from socket: " << ec.value() << " - " << ec.message();
         }
       };
-      std::cout <<  "Reading payload: " << size << " bytes" << std::endl;
+      LOG_TRACE <<  "Reading payload: " << size << " bytes";
       async_read(s, boost::asio::buffer(payload.get(), size), handler);
     }
 
@@ -80,7 +81,7 @@ namespace raft {
         if (!ec) {
           h();
         } else {
-          std::cerr << "Error waiting on socket: " << ec.value() << " - " << ec.message() << std::endl;
+          LOG_ERROR << "Error waiting on socket: " << ec.value() << " - " << ec.message();
         }
       });
       return timer;
@@ -92,11 +93,11 @@ namespace raft {
           if (!ec) {
             h();
           } else if (ec != boost::asio::error::operation_aborted) {
-            std::cerr << "Error waiting on timer: " << ec.value() << " - " << ec.message() << std::endl;
+            LOG_ERROR << "Error waiting on timer: " << ec.value() << " - " << ec.message();
           }
         });
       } else {
-          std::cerr << "Timeout already expired" << std::endl;
+          LOG_ERROR << "Timeout already expired";
       }
     }
   }

@@ -1,16 +1,17 @@
 #include <iostream>
 #include "proto/raft.pb.h"
 #include "rpc.h"
+#include "logging.h"
 
 using namespace std;
 using namespace raft;
 
 void on_appended(const append_entries_response& r) {
-  cout << "Response: term = " << r.term() << ", success = " << r.success() << endl;
+  LOG_INFO << "Response: term = " << r.term() << ", success = " << r.success();
 }
 
 void on_timeout() {
-  cout << "timeout in append entries "<< endl;
+  LOG_INFO << "timeout in append entries ";
 }
 
 int main() {

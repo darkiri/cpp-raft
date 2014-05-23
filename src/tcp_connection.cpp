@@ -2,6 +2,7 @@
 
 #include "tcp_connection.h"
 #include "tcp_util.h"
+#include "logging.h"
 
 namespace raft {
   namespace rpc {
@@ -12,7 +13,7 @@ namespace raft {
     using namespace boost::system;
 
     void tcp_connection::start() {
-      cout << "Connection started" << endl;
+      LOG_INFO << "Connection started";
       auto self = shared_from_this();
       auto handler = [this, self] (const append_entries_request& r) {
         response_ = handler_(r);

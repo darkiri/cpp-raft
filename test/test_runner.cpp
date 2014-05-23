@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <string>
+#include "logging.h"
 
 using namespace std;
 

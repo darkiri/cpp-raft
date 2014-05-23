@@ -6,6 +6,7 @@
 #include "proto/raft.pb.h"
 #include "rpc.h"
 #include <boost/asio.hpp>
+#include "logging.h"
 
 namespace raft {
   namespace rpc {
@@ -25,8 +26,8 @@ namespace raft {
     };
 
     append_entries_response test_handler(const append_entries_request& r) {
-      cout << "append entries handler" << endl;
-      cout << "request: term=" << r.term() << endl;
+      LOG_INFO << "append entries handler";
+      LOG_INFO << "request: term=" << r.term();
       append_entries_response res;
       res.set_term(2);
       res.set_success(true);
@@ -34,13 +35,13 @@ namespace raft {
     }
 
     void TcpServerTest::on_appended(const append_entries_response& r) {
-      cout << "Response: term = " << r.term() << ", success = " << r.success() << endl;
+      LOG_INFO << "Response: term = " << r.term() << ", success = " << r.success();
       response_ = r;
       entriesAppended_.notify_one();
     }
 
     void TcpServerTest::on_timeout() {
-      cout << this_thread::get_id() << " timeout in append entries "<< endl;
+      LOG_INFO << this_thread::get_id() << " timeout in append entries ";
       timeout_.notify_one();
     }
 
@@ -87,9 +88,9 @@ namespace raft {
       conf.set_port(7574);
       rpc::tcp::server s(conf, [](const append_entries_request&) {
           append_entries_response res;
-          cout << this_thread::get_id() << " wait for 1 sec" << endl;
+          LOG_INFO << " wait for 1 sec";
           this_thread::sleep_for(chrono::seconds(1));
-          cout << this_thread::get_id() << " after 1 sec" << endl;
+          LOG_INFO << " after 1 sec";
           res.set_term(2);
           res.set_success(true);
           return res;
