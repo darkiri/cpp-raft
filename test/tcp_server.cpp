@@ -16,6 +16,7 @@ append_entries_response test_handler(const append_entries_request& r) {
 }
 
 int main() {
+  init_log();
   config_server c;
   c.set_id(1);
   c.set_port(7576);

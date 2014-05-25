@@ -16,18 +16,18 @@ env.Program("test",
             "tcp_smoke_tests.cpp",
             "gtest-all.o"
             ] + raft_o), 
-        LIBS = ["pthread", "protobuf", "boost_system", "boost_log"],
+        LIBS = ["pthread", "protobuf", "boost_system", "boost_log", "boost_thread"],
         LIBPATH = ["#build/raft"],
         CPPPATH = ["#gtest/include", "#src", "#build/raft"])
 
 env.Program("tcp_server", 
         source = (["tcp_server.cpp"] + raft_o), 
-        LIBS = ["pthread", "protobuf", "boost_system", "boost_log"],
+        LIBS = ["pthread", "protobuf", "boost_system", "boost_log", "boost_thread"],
         LIBPATH = ["#build/raft"],
         CPPPATH = ["#gtest/include", "#src", "#build/raft"])
 
 env.Program("tcp_client", 
         source = (["tcp_client.cpp"] + raft_o), 
-        LIBS = ["pthread", "protobuf", "boost_system", "boost_log"],
+        LIBS = ["pthread", "protobuf", "boost_system", "boost_log", "boost_thread"],
         LIBPATH = ["#build/raft"],
         CPPPATH = ["#gtest/include", "#src", "#build/raft"])

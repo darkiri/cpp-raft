@@ -41,7 +41,7 @@ namespace raft {
     }
 
     void TcpServerTest::on_timeout() {
-      LOG_INFO << this_thread::get_id() << " timeout in append entries ";
+      LOG_INFO << " timeout in append entries ";
       timeout_.notify_one();
     }
 

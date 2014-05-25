@@ -15,6 +15,7 @@ void on_timeout() {
 }
 
 int main() {
+  init_log();
   config_server config;
   config.set_id(1);
   config.set_port(7576);
