@@ -39,14 +39,15 @@ namespace raft {
     }
 
     template<typename Message>
-    void write_message(tcp_socket& s, const Message& request, std::function<void()> h) {
+    void write_message(tcp_socket& s, const Message& request, std::function<void()> h, error_handler eh) {
       auto data = pack(request);
-      auto handler = [data, h] (const boost::system::error_code& ec, size_t size) {
+      auto handler = [data, h, eh] (const boost::system::error_code& ec, size_t size) {
         if (!ec) {
           LOG_TRACE << "Writing completed: " << size << " bytes";
           h();
         } else {
           LOG_ERROR << "Error writing to socket: " << ec.value() << " - " << ec.message();
+          eh();
         }
       };
       LOG_TRACE <<  "Writing: " << get_size(request) << " bytes";
@@ -54,13 +55,13 @@ namespace raft {
     }
 
     template<typename Message>
-    void read_message(tcp_socket& s, std::function<void(const Message&)> h) {
+    void read_message(tcp_socket& s, std::function<void(const Message&)> h, error_handler eh) {
       std::array<char, tcp::HEADER_LENGTH> data;
       LOG_TRACE <<  "Reading header: " << tcp::HEADER_LENGTH << " bytes";
       read(s, boost::asio::buffer(&data, tcp::HEADER_LENGTH));
       auto size = deserialize_int(data);
       auto payload = std::shared_ptr<char>(new char[size]);
-      auto handler = [payload, h] (const boost::system::error_code& ec, size_t size) {
+      auto handler = [payload, h, eh] (const boost::system::error_code& ec, size_t size) {
         if (!ec) {
           LOG_TRACE << "Reading completed: " << size << " bytes";
           Message message;
@@ -68,26 +69,27 @@ namespace raft {
           h(message);
         } else {
           LOG_ERROR << "Error reading from socket: " << ec.value() << " - " << ec.message();
+          eh();
         }
       };
       LOG_TRACE <<  "Reading payload: " << size << " bytes";
       async_read(s, boost::asio::buffer(payload.get(), size), handler);
     }
 
-    inline std::shared_ptr<boost::asio::deadline_timer> create_deadline(boost::asio::io_service& ios, timeout t, timeout_handler h) {
+    inline std::shared_ptr<boost::asio::deadline_timer> create_deadline(boost::asio::io_service& ios, timeout t, error_handler h) {
       auto timer = std::shared_ptr<boost::asio::deadline_timer>(new boost::asio::deadline_timer(ios));
       timer->expires_from_now(boost::posix_time::milliseconds(t.get()));
       timer->async_wait([timer, h] (const boost::system::error_code& ec) {
         if (!ec) {
           h();
-        } else {
+        } else if (ec != boost::asio::error::operation_aborted) {
           LOG_ERROR << "Error waiting on socket: " << ec.value() << " - " << ec.message();
         }
       });
       return timer;
     }
 
-    inline void extend_deadline(std::shared_ptr<boost::asio::deadline_timer> timer, timeout t, timeout_handler h) {
+    inline void extend_deadline(std::shared_ptr<boost::asio::deadline_timer> timer, timeout t, error_handler h) {
       if (timer->expires_from_now(boost::posix_time::milliseconds(t.get()))) {
         timer->async_wait([timer, h] (const boost::system::error_code& ec) {
           if (!ec) {

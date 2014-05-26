@@ -14,6 +14,7 @@ env.Program("test",
             "node_tests.cpp",
             "log_tests.cpp",
             "tcp_smoke_tests.cpp",
+            "tcp_writeonly_client.cpp",
             "gtest-all.o"
             ] + raft_o), 
         LIBS = ["pthread", "protobuf", "boost_system", "boost_log", "boost_thread"],

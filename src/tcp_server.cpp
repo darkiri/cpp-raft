@@ -19,9 +19,11 @@ namespace raft {
 
     struct tcp::server::impl {
       public:
-        impl(const config_server& c, append_handler h) : 
+        impl(const config_server& c, timeout t, append_handler ah, error_handler th) : 
           config_(c),
-          handler_(h),
+          timeout_(t),
+          handler_(ah),
+          error_handler_(th),
           thread_pool_(),
           ios_(),
           acceptor_(ios_),
@@ -43,7 +45,10 @@ namespace raft {
         void handle_accept(shared_ptr<tcp_connection>, const error_code&);
 
         const config_server& config_;
+        const timeout& timeout_;
+
         append_handler handler_;
+        error_handler error_handler_;
         array<shared_ptr<thread>, THREAD_POOL_SIZE> thread_pool_;
 
         io_service ios_;
@@ -70,10 +75,11 @@ namespace raft {
           thread_pool_[i]->join();
         } catch (const system_error& ) { /* suppress */ };
       }
+      LOG_INFO << "Server stopped.";
     }
 
     void tcp::server::impl::start_accept(){
-      auto conn = tcp_connection::create(move(socket_), handler_);
+      auto conn = tcp_connection::create(move(socket_), timeout_, handler_, error_handler_);
       auto handler = bind(&impl::handle_accept, this, conn, _1);
       acceptor_.async_accept(conn->socket(), handler);
     }
@@ -89,8 +95,8 @@ namespace raft {
       }
     }
 
-    tcp::server::server(const config_server& c, append_handler h) :
-      pimpl_(new tcp::server::impl(c, h)) {} 
+    tcp::server::server(const config_server& c, const timeout& t, append_handler h, error_handler th) :
+      pimpl_(new tcp::server::impl(c, t, h, th)) {} 
 
     void tcp::server::run() {
       pimpl_->run();

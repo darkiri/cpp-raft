@@ -41,7 +41,7 @@ namespace raft {
 
         ~impl();
 
-        void append_entries_async(const append_entries_request&, appended_handler, timeout_handler);
+        void append_entries_async(const append_entries_request&, appended_handler, error_handler);
 
       private:
         const config_server& config_;
@@ -60,24 +60,25 @@ namespace raft {
           threads_[i]->join();
         } catch (const system_error& ) { /* suppress */ };
       }
+      LOG_INFO << "Client stopped.";
     };
 
-    void tcp::client::impl::append_entries_async(const append_entries_request& r, appended_handler ah, timeout_handler th) {
+    void tcp::client::impl::append_entries_async(const append_entries_request& r, appended_handler ah, error_handler th) {
       auto deadline = create_deadline(ios_, timeout_, th);
       auto handler = [this, ah, deadline, th]() {
         extend_deadline(deadline, timeout_, th);
         read_message<append_entries_response>(socket_, [deadline, ah, th](append_entries_response r) {
             deadline->cancel();
             ah(r);
-          });
+          }, th);
       };
-      write_message<append_entries_request>(socket_, r, handler);
+      write_message<append_entries_request>(socket_, r, handler, th);
     }
 
     tcp::client::client(const config_server& c, const timeout& t) :
       pimpl_(new tcp::client::impl(c, t)) {} 
 
-    void tcp::client::append_entries_async(const append_entries_request& r, appended_handler ah, timeout_handler th) {
+    void tcp::client::append_entries_async(const append_entries_request& r, appended_handler ah, error_handler th) {
       pimpl_->append_entries_async(r, ah, th);
     }
 

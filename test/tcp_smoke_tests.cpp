@@ -52,13 +52,13 @@ namespace raft {
     }
 
     TEST_F(TcpServerTest, SmokeTest) {
+      timeout t;
       config_server conf;
       conf.set_id(1);
       conf.set_port(7574);
-      rpc::tcp::server s(conf, test_handler);
+      rpc::tcp::server s(conf, t, test_handler, [this](){on_timeout();});
       s.run();
 
-      timeout t;
       rpc::tcp::client c(conf, t);
       append_entries_request r;
       r.set_term(223);
@@ -82,11 +82,12 @@ namespace raft {
       EXPECT_THROW(rpc::tcp::client(conf, t), boost::system::system_error);
     }
 
-    TEST_F(TcpServerTest, ClientTimeoutTest_AppenEntries) {
+    TEST_F(TcpServerTest, ClientTimeoutTest_AppendEntries) {
+      timeout t;
       config_server conf;
       conf.set_id(1);
       conf.set_port(7574);
-      rpc::tcp::server s(conf, [](const append_entries_request&) {
+      rpc::tcp::server s(conf, t, [](const append_entries_request&) {
           append_entries_response res;
           LOG_INFO << " wait for 1 sec";
           this_thread::sleep_for(chrono::seconds(1));
@@ -94,10 +95,9 @@ namespace raft {
           res.set_term(2);
           res.set_success(true);
           return res;
-          });
+          }, [](){});
       s.run();
 
-      timeout t;
       rpc::tcp::client c(conf, t);
       append_entries_request r;
       r.set_term(223);
@@ -106,6 +106,7 @@ namespace raft {
       mutex mtx;
       unique_lock<mutex> lck(mtx);
       auto res = timeout_.wait_for(lck, chrono::seconds(5));
+      LOG_INFO << "Stopping server";
       s.stop();
       if (res == cv_status::timeout) {
         FAIL() << "Client haven't produced expected timeout.";
