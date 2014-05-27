@@ -14,6 +14,14 @@ append_entries_response test_handler(const append_entries_request& r) {
   res.set_success(true);
   return res;
 }
+request_vote_response vote_handler(const request_vote_request& r) {
+  LOG_INFO << "request vote handler";
+  LOG_INFO << "request: term=" << r.term();
+  request_vote_response res;
+  res.set_term(2);
+  res.set_granted(true);
+  return res;
+}
 void on_timeout() {
   LOG_WARN << "Timeout in Server.";
 }
@@ -24,7 +32,7 @@ int main() {
   config_server c;
   c.set_id(1);
   c.set_port(7576);
-  rpc::tcp::server s(c, t, test_handler, on_timeout);
+  rpc::tcp::server s(c, t, test_handler, vote_handler, on_timeout);
   s.run();
   char* tmp = 0;
   cin.getline(tmp, 0);

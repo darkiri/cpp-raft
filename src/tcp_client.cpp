@@ -41,7 +41,8 @@ namespace raft {
 
         ~impl();
 
-        void append_entries_async(const append_entries_request&, appended_handler, error_handler);
+        void append_entries_async(const append_entries_request&, on_appended_handler, error_handler);
+        void request_vote_async(const request_vote_request&, on_voted_handler, error_handler);
 
       private:
         const config_server& config_;
@@ -63,7 +64,7 @@ namespace raft {
       LOG_INFO << "Client stopped.";
     };
 
-    void tcp::client::impl::append_entries_async(const append_entries_request& r, appended_handler ah, error_handler th) {
+    void tcp::client::impl::append_entries_async(const append_entries_request& r, on_appended_handler ah, error_handler th) {
       auto deadline = create_deadline(ios_, timeout_, th);
       auto handler = [this, ah, deadline, th]() {
         extend_deadline(deadline, timeout_, th);
@@ -75,11 +76,27 @@ namespace raft {
       write_message<append_entries_request>(socket_, r, handler, th);
     }
 
+    void tcp::client::impl::request_vote_async(const request_vote_request& r, on_voted_handler vh, error_handler eh) {
+      auto deadline = create_deadline(ios_, timeout_, eh);
+      auto handler = [this, vh, deadline, eh]() {
+        extend_deadline(deadline, timeout_, eh);
+        read_message<request_vote_response>(socket_, [deadline, vh, eh](request_vote_response r) {
+            deadline->cancel();
+            vh(r);
+          }, eh);
+      };
+      write_message<request_vote_request>(socket_, r, handler, eh);
+    }
+
     tcp::client::client(const config_server& c, const timeout& t) :
       pimpl_(new tcp::client::impl(c, t)) {} 
 
-    void tcp::client::append_entries_async(const append_entries_request& r, appended_handler ah, error_handler th) {
+    void tcp::client::append_entries_async(const append_entries_request& r, on_appended_handler ah, error_handler th) {
       pimpl_->append_entries_async(r, ah, th);
+    }
+
+    void tcp::client::request_vote_async(const request_vote_request& r, on_voted_handler vh, error_handler eh) {
+      pimpl_->request_vote_async(r, vh, eh);
     }
 
     tcp::client::~client() = default;
