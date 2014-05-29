@@ -14,10 +14,10 @@ append_entries_response test_handler(const append_entries_request& r) {
   res.set_success(true);
   return res;
 }
-request_vote_response vote_handler(const request_vote_request& r) {
+vote_response vote_handler(const vote_request& r) {
   LOG_INFO << "request vote handler";
   LOG_INFO << "request: term=" << r.term();
-  request_vote_response res;
+  vote_response res;
   res.set_term(2);
   res.set_granted(true);
   return res;

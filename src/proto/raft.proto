@@ -12,23 +12,35 @@ message config {
 message log_entry {
     required uint64 term = 1;
 }
-message append_entries {
-    message request {
-        required uint64 term = 1;
-        repeated log_entry entries = 2;
-    }
-    message response {
-        required uint64 term = 1;
-        required bool success = 2;
-    }
+
+message append_entries_request {
+    required uint64 term = 1;
+    repeated log_entry entries = 2;
 }
-message request_vote {
-    message request {
-        required uint64 term = 1;
-        required uint32 candidateId = 2;
+
+message append_entries_response {
+    required uint64 term = 1;
+    required bool success = 2;
+}
+
+message vote_request {
+    required uint64 term = 1;
+    required uint32 candidate_id = 2;
+}
+message vote_response {
+    required uint64 term = 1;
+    required bool granted = 2;
+}
+
+message raft_message {
+    enum type {
+        APPEND_ENTRIES = 1;
+        VOTE = 2;
     }
-    message response {
-        required uint64 term = 1;
-        required bool granted = 2;
-    }
+    required type discriminator = 1;
+
+    optional append_entries_request append_entries_request = 2;
+    optional append_entries_response append_entries_response = 3;
+    optional vote_request vote_request = 4;
+    optional vote_response vote_response = 5;
 }

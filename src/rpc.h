@@ -10,8 +10,8 @@ namespace raft {
   namespace rpc {
     typedef std::function<append_entries_response(const append_entries_request&)> append_handler;
     typedef std::function<void(const append_entries_response&)> on_appended_handler;
-    typedef std::function<request_vote_response(const request_vote_request&)> vote_handler;
-    typedef std::function<void(const request_vote_response&)> on_voted_handler;
+    typedef std::function<vote_response(const vote_request&)> vote_handler;
+    typedef std::function<void(const vote_response&)> on_voted_handler;
     typedef std::function<void()> error_handler;
 
     class tcp {
@@ -37,7 +37,7 @@ namespace raft {
             ~client();
 
             void append_entries_async(const append_entries_request&, on_appended_handler, error_handler);
-            void request_vote_async(const request_vote_request&, on_voted_handler, error_handler);
+            void request_vote_async(const vote_request&, on_voted_handler, error_handler);
           private:
             struct impl;
             std::unique_ptr<impl> pimpl_;

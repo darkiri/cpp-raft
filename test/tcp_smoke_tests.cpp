@@ -18,12 +18,12 @@ namespace raft {
         virtual ~TcpServerTest() {}
 
         void call_append_entries(rpc::tcp::client& c, const append_entries_request& r);
-        void call_request_vote(rpc::tcp::client& c, const request_vote_request& r);
+        void call_request_vote(rpc::tcp::client& c, const vote_request& r);
         void on_appended(const append_entries_response& r);
-        void on_voted(const request_vote_response& r);
+        void on_voted(const vote_response& r);
         void on_timeout();
         append_entries_response response_;
-        request_vote_response vote_response_;
+        vote_response vote_response_;
         condition_variable entriesAppended_;
         condition_variable voted_;
         condition_variable timeout_;
@@ -38,10 +38,10 @@ namespace raft {
       return res;
     }
 
-    request_vote_response vote_test_handler(const request_vote_request& r) {
+    vote_response vote_test_handler(const vote_request& r) {
       LOG_INFO << "request vote handler";
       LOG_INFO << "request: term=" << r.term();
-      request_vote_response res;
+      vote_response res;
       res.set_term(5);
       res.set_granted(true);
       return res;
@@ -53,7 +53,7 @@ namespace raft {
       entriesAppended_.notify_one();
     }
 
-    void TcpServerTest::on_voted(const request_vote_response& r) {
+    void TcpServerTest::on_voted(const vote_response& r) {
       LOG_INFO << "Vote Response: term = " << r.term() << ", granted = " << r.granted();
       vote_response_ = r;
       voted_.notify_one();
@@ -70,9 +70,9 @@ namespace raft {
           [this]() {on_timeout();});
     }
 
-    void TcpServerTest::call_request_vote(rpc::tcp::client& c, const request_vote_request& r) {
+    void TcpServerTest::call_request_vote(rpc::tcp::client& c, const vote_request& r) {
       c.request_vote_async(r, 
-          [this](request_vote_response r) {on_voted(r);},
+          [this](vote_response r) {on_voted(r);},
           [this]() {on_timeout();});
     }
 
@@ -108,9 +108,9 @@ namespace raft {
       s.run();
 
       rpc::tcp::client c(conf, t);
-      request_vote_request r;
+      vote_request r;
       r.set_term(223);
-      r.set_candidateid(10);
+      r.set_candidate_id(10);
       call_request_vote(c, r);
 
       mutex mtx;
@@ -138,14 +138,13 @@ namespace raft {
       conf.set_port(7574);
       rpc::tcp::server s(conf, t, [](const append_entries_request&) {
           append_entries_response res;
-          LOG_INFO << " wait for 1 sec";
-          this_thread::sleep_for(chrono::seconds(1));
-          LOG_INFO << " after 1 sec";
+          LOG_INFO << " Server waiting for 500 ms";
+          this_thread::sleep_for(chrono::milliseconds(500));
           res.set_term(2);
           res.set_success(true);
           return res;
           }, 
-          [](const request_vote_request&){return request_vote_response();},
+          [](const vote_request&){return vote_response();},
           [](){});
       s.run();
 
