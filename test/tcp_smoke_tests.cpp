@@ -29,21 +29,21 @@ namespace raft {
         condition_variable timeout_;
     };
 
-    append_entries_response test_handler(const append_entries_request& r) {
+    unique_ptr<append_entries_response> test_handler(const append_entries_request& r) {
       LOG_INFO << "append entries handler";
       LOG_INFO << "request: term=" << r.term();
-      append_entries_response res;
-      res.set_term(2);
-      res.set_success(true);
+      unique_ptr<append_entries_response> res(new append_entries_response());
+      res->set_term(2);
+      res->set_success(true);
       return res;
     }
 
-    vote_response vote_test_handler(const vote_request& r) {
+    unique_ptr<vote_response> vote_test_handler(const vote_request& r) {
       LOG_INFO << "request vote handler";
       LOG_INFO << "request: term=" << r.term();
-      vote_response res;
-      res.set_term(5);
-      res.set_granted(true);
+      unique_ptr<vote_response> res(new vote_response());
+      res->set_term(5);
+      res->set_granted(true);
       return res;
     }
 
@@ -65,13 +65,17 @@ namespace raft {
     }
 
     void TcpServerTest::call_append_entries(rpc::tcp::client& c, const append_entries_request& r) {
-      c.append_entries_async(r, 
+      unique_ptr<append_entries_request> pr(new append_entries_request());
+      pr->MergeFrom(r);
+      c.append_entries_async(move(pr), 
           [this](append_entries_response r) {on_appended(r);},
           [this]() {on_timeout();});
     }
 
     void TcpServerTest::call_request_vote(rpc::tcp::client& c, const vote_request& r) {
-      c.request_vote_async(r, 
+      unique_ptr<vote_request> pr(new vote_request());
+      pr->MergeFrom(r);
+      c.request_vote_async(move(pr), 
           [this](vote_response r) {on_voted(r);},
           [this]() {on_timeout();});
     }
@@ -137,14 +141,14 @@ namespace raft {
       conf.set_id(1);
       conf.set_port(7574);
       rpc::tcp::server s(conf, t, [](const append_entries_request&) {
-          append_entries_response res;
           LOG_INFO << " Server waiting for 500 ms";
           this_thread::sleep_for(chrono::milliseconds(500));
-          res.set_term(2);
-          res.set_success(true);
+          unique_ptr<append_entries_response> res(new append_entries_response());
+          res->set_term(2);
+          res->set_success(true);
           return res;
           }, 
-          [](const vote_request&){return vote_response();},
+          [](const vote_request&){return unique_ptr<vote_response>(new vote_response());},
           [](){});
       s.run();
 

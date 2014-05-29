@@ -16,24 +16,21 @@ namespace raft {
       LOG_INFO << "Connection started";
       auto deadline = create_deadline(socket_.get_io_service(), timeout_, error_handler_);
       auto self = shared_from_this();
-      auto handler = [this, self, deadline] (const raft_message& r) {
+      auto handler = [this, self, deadline] (const raft_message& m) {
         extend_deadline(deadline, timeout_, error_handler_);
-        response_.set_discriminator(r.discriminator());
-        switch (r.discriminator()) {
+        // TODO protobuf performance
+        response_.set_discriminator(m.discriminator());
+        switch (m.discriminator()) {
           case raft_message::APPEND_ENTRIES:
             {
-              auto aer = append_handler_(r.append_entries_request());
-              auto newAEResponse = new append_entries_response();
-              newAEResponse->MergeFrom(aer);
-              response_.set_allocated_append_entries_response(newAEResponse);
+              auto r = append_handler_(m.append_entries_request());
+              response_.set_allocated_append_entries_response(r.release());
               break;
             }
           case raft_message::VOTE:
             {
-              auto vr = vote_handler_(r.vote_request());
-              auto newVResponse = new vote_response();
-              newVResponse->MergeFrom(vr);
-              response_.set_allocated_vote_response(newVResponse);
+              auto r = vote_handler_(m.vote_request());
+              response_.set_allocated_vote_response(r.release());
               break;
             }
           default:

@@ -21,9 +21,9 @@ int main() {
   config.set_port(7576);
   timeout t;
   rpc::tcp::client c(config, t);
-  append_entries_request r;
-  r.set_term(223);
-  c.append_entries_async(r, on_appended, on_timeout);
+  unique_ptr<append_entries_request> r(new append_entries_request());
+  r->set_term(223);
+  c.append_entries_async(move(r), on_appended, on_timeout);
   char* tmp = 0;
   cin.getline(tmp, 0);
   return 0;

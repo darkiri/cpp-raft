@@ -6,20 +6,20 @@
 using namespace std;
 using namespace raft;
 
-append_entries_response test_handler(const append_entries_request& r) {
+unique_ptr<append_entries_response> test_handler(const append_entries_request& r) {
   LOG_INFO << "append entries handler";
   LOG_INFO << "request: term=" << r.term();
-  append_entries_response res;
-  res.set_term(2);
-  res.set_success(true);
+  unique_ptr<append_entries_response> res(new append_entries_response());
+  res->set_term(2);
+  res->set_success(true);
   return res;
 }
-vote_response vote_handler(const vote_request& r) {
+unique_ptr<vote_response> vote_handler(const vote_request& r) {
   LOG_INFO << "request vote handler";
   LOG_INFO << "request: term=" << r.term();
-  vote_response res;
-  res.set_term(2);
-  res.set_granted(true);
+  unique_ptr<vote_response> res(new vote_response());
+  res->set_term(2);
+  res->set_granted(true);
   return res;
 }
 void on_timeout() {

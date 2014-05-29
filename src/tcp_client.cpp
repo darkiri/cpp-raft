@@ -41,8 +41,8 @@ namespace raft {
 
         ~impl();
 
-        void append_entries_async(const append_entries_request&, on_appended_handler, error_handler);
-        void request_vote_async(const vote_request&, on_voted_handler, error_handler);
+        void append_entries_async(unique_ptr<append_entries_request>, on_appended_handler, error_handler);
+        void request_vote_async(unique_ptr<vote_request>, on_voted_handler, error_handler);
 
       private:
         const config_server& config_;
@@ -64,7 +64,7 @@ namespace raft {
       LOG_INFO << "Client stopped.";
     };
 
-    void tcp::client::impl::append_entries_async(const append_entries_request& r, on_appended_handler ah, error_handler th) {
+    void tcp::client::impl::append_entries_async(unique_ptr<append_entries_request> r, on_appended_handler ah, error_handler th) {
       auto deadline = create_deadline(ios_, timeout_, th);
       auto handler = [this, ah, deadline, th]() {
         extend_deadline(deadline, timeout_, th);
@@ -73,15 +73,14 @@ namespace raft {
             ah(m.append_entries_response());
           }, th);
       };
+      // TODO protobuf performance
       raft_message m;
       m.set_discriminator(raft_message::APPEND_ENTRIES);
-      auto newRequest = new append_entries_request();
-      newRequest->MergeFrom(r);
-      m.set_allocated_append_entries_request(newRequest);
+      m.set_allocated_append_entries_request(r.release());
       write_message<raft_message>(socket_, m, handler, th);
     }
 
-    void tcp::client::impl::request_vote_async(const vote_request& r, on_voted_handler vh, error_handler eh) {
+    void tcp::client::impl::request_vote_async(unique_ptr<vote_request> r, on_voted_handler vh, error_handler eh) {
       auto deadline = create_deadline(ios_, timeout_, eh);
       auto handler = [this, vh, deadline, eh]() {
         extend_deadline(deadline, timeout_, eh);
@@ -90,23 +89,22 @@ namespace raft {
             vh(m.vote_response());
           }, eh);
       };
+      // TODO protobuf performance
       raft_message m;
       m.set_discriminator(raft_message::VOTE);
-      auto newRequest = new vote_request();
-      newRequest->MergeFrom(r);
-      m.set_allocated_vote_request(newRequest);
+      m.set_allocated_vote_request(r.release());
       write_message<raft_message>(socket_, m, handler, eh);
     }
 
     tcp::client::client(const config_server& c, const timeout& t) :
       pimpl_(new tcp::client::impl(c, t)) {} 
 
-    void tcp::client::append_entries_async(const append_entries_request& r, on_appended_handler ah, error_handler th) {
-      pimpl_->append_entries_async(r, ah, th);
+    void tcp::client::append_entries_async(unique_ptr<append_entries_request> r, on_appended_handler ah, error_handler th) {
+      pimpl_->append_entries_async(move(r), ah, th);
     }
 
-    void tcp::client::request_vote_async(const vote_request& r, on_voted_handler vh, error_handler eh) {
-      pimpl_->request_vote_async(r, vh, eh);
+    void tcp::client::request_vote_async(unique_ptr<vote_request> r, on_voted_handler vh, error_handler eh) {
+      pimpl_->request_vote_async(move(r), vh, eh);
     }
 
     tcp::client::~client() = default;
