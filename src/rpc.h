@@ -16,8 +16,6 @@ namespace raft {
 
     class tcp {
       public:
-        const static int HEADER_LENGTH = 4;
-
         class server {
           public:
             server(const config_server& c, const timeout&, append_handler, vote_handler, error_handler); 

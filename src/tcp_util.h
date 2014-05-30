@@ -11,6 +11,8 @@ namespace raft {
 
     typedef boost::asio::ip::tcp::socket tcp_socket;
 
+    const static int TCP_HEADER_LENGTH = 4;
+
     inline void serialize_int(char* data, int n) {
       data[0] = (n >> 24) & 0xFF;
       data[1] = (n >> 16) & 0xFF;
@@ -27,14 +29,14 @@ namespace raft {
     }
 
     inline int get_size(const google::protobuf::Message& m) {
-      return tcp::HEADER_LENGTH + m.ByteSize();
+      return TCP_HEADER_LENGTH + m.ByteSize();
     }
 
     inline std::shared_ptr<char> pack(const google::protobuf::Message& m) {
       auto message_size = get_size(m);
       auto data = std::shared_ptr<char>(new char[message_size]);
       serialize_int(data.get(), m.ByteSize());
-      m.SerializeToArray(data.get() + tcp::HEADER_LENGTH, m.ByteSize());
+      m.SerializeToArray(data.get() + TCP_HEADER_LENGTH, m.ByteSize());
       return data;
     }
 
@@ -56,9 +58,9 @@ namespace raft {
 
     template<typename Message>
     void read_message(tcp_socket& s, std::function<void(const Message&)> h, error_handler eh) {
-      std::array<char, tcp::HEADER_LENGTH> data;
-      LOG_TRACE <<  "Reading header: " << tcp::HEADER_LENGTH << " bytes";
-      read(s, boost::asio::buffer(&data, tcp::HEADER_LENGTH));
+      std::array<char, TCP_HEADER_LENGTH> data;
+      LOG_TRACE <<  "Reading header: " << TCP_HEADER_LENGTH << " bytes";
+      read(s, boost::asio::buffer(&data, TCP_HEADER_LENGTH));
       auto size = deserialize_int(data);
       auto payload = std::shared_ptr<char>(new char[size]);
       auto handler = [payload, h, eh] (const boost::system::error_code& ec, size_t size) {
