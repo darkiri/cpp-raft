@@ -7,16 +7,16 @@ using namespace std;
 using namespace raft;
 
 unique_ptr<append_entries_response> test_handler(const append_entries_request& r) {
-  LOG_INFO << "append entries handler";
-  LOG_INFO << "request: term=" << r.term();
+  LOG_INFO << "Append entries handler";
+  LOG_INFO << "Request: term=" << r.term();
   unique_ptr<append_entries_response> res(new append_entries_response());
   res->set_term(2);
   res->set_success(true);
   return res;
 }
 unique_ptr<vote_response> vote_handler(const vote_request& r) {
-  LOG_INFO << "request vote handler";
-  LOG_INFO << "request: term=" << r.term();
+  LOG_INFO << "Request vote handler";
+  LOG_INFO << "Request: term=" << r.term();
   unique_ptr<vote_response> res(new vote_response());
   res->set_term(2);
   res->set_granted(true);
