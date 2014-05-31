@@ -15,10 +15,10 @@ namespace raft {
 
   TEST_F(InMemoryLogTest, Trim_Test) {
     InMemoryLog log;
-    log.Append(CreateLogEntry(1));
-    log.Append(CreateLogEntry(2));
-    log.Append(CreateLogEntry(3));
+    log.Append(create_log_entry(1));
+    log.Append(create_log_entry(2));
+    log.Append(create_log_entry(3));
     log.Trim(log.Begin() + 1);
-    EXPECT_EQ(1, (--log.End())->term);
+    EXPECT_EQ(1, (--log.End())->term());
   }
 }

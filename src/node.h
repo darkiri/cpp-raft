@@ -2,32 +2,13 @@
 #define RAFT_NODE
 
 #include "log.h"
+#include "proto/raft.pb.h"
 
 namespace raft {
   enum class NodeState {
     FOLLOWER = 0,
     CANDIDATE = 1,
     LEADER = 2
-  };
-
-  struct AppendEntriesArgs {
-    unsigned int term;
-    unsigned int prev_log_index;
-    unsigned int prev_log_term;
-    std::vector<LogEntry> entries;
-    unsigned int leader_commit;
-  };
-
-  struct AppendEntriesRes{
-    unsigned int term;
-    bool success;
-  };
-
-  struct RequestVoteArgs {
-    unsigned int term;
-    unsigned int candidate_id;
-    unsigned int last_log_index;
-    unsigned int last_log_term;
   };
 
   // this class is per design not thread safe
@@ -50,10 +31,10 @@ namespace raft {
         return voted_for_;
       }
       unsigned int GetCurrentTerm() const {
-        return log_.Size() > 0 ? (--log_.End())->term : 0;
+        return log_.Size() > 0 ? (--log_.End())->term() : 0;
       }
-      AppendEntriesRes AppendEntries(const AppendEntriesArgs& args);
-      AppendEntriesRes RequestVote(const RequestVoteArgs& args);
+      append_entries_response AppendEntries(const append_entries_request& args);
+      vote_response RequestVote(const vote_request& args);
 
       void StartElection();
     private:

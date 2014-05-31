@@ -4,34 +4,27 @@
 #include <vector>
 #include <memory>
 #include <algorithm>
+#include "proto/raft.pb.h"
 
 namespace raft {
-  struct LogEntry {
-    unsigned int term;
-    // TODO payload
-  };
-
-  typedef std::vector<LogEntry>::const_iterator InMemoryIterator;
+  typedef std::vector<log_entry>::const_iterator const_iterator;
   class InMemoryLog {
       public:
         InMemoryLog() {};
 
-        InMemoryIterator Begin() const{
+        const_iterator Begin() const{
           return entries_.begin();
         }
-        InMemoryIterator End() const{
+        const_iterator End() const{
           return entries_.end();
         }
         unsigned int Size() const {
           return entries_.size();
         }
-        void Append(InMemoryIterator begin, InMemoryIterator end) {
-          std::for_each(begin, end, [this](const LogEntry& e) { entries_.push_back(e);});
-        }
-        void Append(const LogEntry& e) {
+        void Append(const log_entry& e) {
           entries_.push_back(e);
         }
-        void Trim(InMemoryIterator iter) {
+        void Trim(const_iterator iter) {
           auto  nonConstIter = entries_.begin() + (iter - entries_.begin());
           entries_.erase(nonConstIter, entries_.end());
         }
@@ -39,7 +32,7 @@ namespace raft {
         InMemoryLog(const InMemoryLog&);
         InMemoryLog& operator=(const InMemoryLog&);
 
-        std::vector<LogEntry> entries_;
+        std::vector<log_entry> entries_;
     };
   }
 #endif
