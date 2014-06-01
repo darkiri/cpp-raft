@@ -19,6 +19,7 @@ namespace raft {
           return socket_;
         }
         void start();
+        ~tcp_connection();
       private:
         tcp_connection(tcp_socket socket, const timeout& t, append_handler ah, vote_handler vh, error_handler th) :
           socket_(std::move(socket)),

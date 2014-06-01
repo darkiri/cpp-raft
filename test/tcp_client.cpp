@@ -34,7 +34,6 @@ int main() {
   r->set_leader_commit(131);
   c.append_entries_async(move(r), on_appended, on_timeout);
 
-  this_thread::sleep_for(chrono::milliseconds(500));
   unique_ptr<vote_request> r2(new vote_request());
   r2->set_term(223);
   r2->set_candidate_id(2);

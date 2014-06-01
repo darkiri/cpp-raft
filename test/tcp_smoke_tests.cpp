@@ -22,6 +22,7 @@ namespace raft {
         append_entries_response append_response_;
         vote_response vote_response_;
         condition_variable processed_;
+        condition_variable processed_2nd_;
     };
 
     unique_ptr<append_entries_response> append_test_handler(const append_entries_request& r) {
@@ -115,5 +116,51 @@ namespace raft {
       EXPECT_TRUE(vote_response_.granted());
       s.stop();
     }
+
+    TEST_F(TcpSmokeTests, AppendEntries_RequestVote) {
+      timeout t;
+      config_server conf;
+      conf.set_id(1);
+      conf.set_port(7574);
+
+      rpc::tcp::server s(conf, t,
+          append_test_handler,
+          vote_test_handler,
+          [](){LOG_INFO << "Server processing failure.";});
+      s.run();
+
+      rpc::tcp::client c(conf, t);
+      unique_ptr<append_entries_request> r(new append_entries_request());
+      r->set_term(223);
+      r->set_leader_id(2);
+      r->set_prev_log_index(222);
+      r->set_prev_log_term(333);
+      r->set_leader_commit(131);
+      c.append_entries_async(move(r), 
+          bind(&TcpSmokeTests::on_appended, this, _1),
+          [](){LOG_INFO << "Error requesting append entries.";});
+
+
+      unique_ptr<vote_request> r2(new vote_request());
+      r2->set_term(223);
+      r2->set_candidate_id(10);
+      r2->set_last_log_term(333);
+      r2->set_last_log_index(222);
+      c.request_vote_async(move(r2), 
+          bind(&TcpSmokeTests::on_voted, this, _1),
+          [](){LOG_INFO << "Error requesting vote.";});
+
+      mutex mtx;
+      unique_lock<mutex> lck(mtx);
+      processed_.wait_for(lck, std::chrono::seconds(1));
+      processed_2nd_.wait_for(lck, std::chrono::seconds(1));
+
+      EXPECT_EQ(append_response_.term(), 2);
+      EXPECT_TRUE(append_response_.success());
+      EXPECT_EQ(vote_response_.term(), 5);
+      EXPECT_TRUE(vote_response_.granted());
+      s.stop();
+    }
+
   }
 }

@@ -26,15 +26,6 @@ namespace raft {
       timeout_.notify_one();
     }
 
-    TEST_F(TcpTimeoutTests, ClientFailsFastWithoutServer) {
-      config_server conf;
-      conf.set_id(1);
-      conf.set_port(7574);
-
-      timeout t;
-      EXPECT_THROW(rpc::tcp::client(conf, t), boost::system::system_error);
-    }
-
     TEST_F(TcpTimeoutTests, AppendEntries) {
       timeout t;
       config_server conf;

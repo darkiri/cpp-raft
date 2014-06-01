@@ -18,6 +18,34 @@ namespace raft {
 
     typedef boost::asio::ip::tcp::resolver tcp_resolver;
 
+    class tcp_client_connection {
+      public:
+        tcp_client_connection(const config_server& config, tcp_socket socket, const timeout& t) :
+          socket_(std::move(socket)),
+          timeout_(t) {
+            LOG_TRACE << "Client - starting connection to " << config.host() << ":" << config.port();
+            tcp_resolver resolver(socket_.get_io_service());
+            tcp_resolver::query query(config.host(), to_string(config.port()));
+            auto iterator = resolver.resolve(query);
+
+            connect(socket_, iterator);
+        }
+
+        ~tcp_client_connection() {
+          LOG_TRACE  << "Client - connection stopped.";
+          // TODO Socket close or shutdown enough?
+        }
+
+        void invoke_async(raft_message&, std::function<void(const raft_message&)> h, error_handler eh);
+
+      private:
+        tcp_client_connection(const tcp_client_connection&) = delete;
+        tcp_client_connection& operator=(const tcp_client_connection&) = delete;
+
+        tcp_socket socket_;
+        timeout timeout_;
+    };
+
     struct tcp::client::impl {
       public:
         impl(const config_server& c, const timeout& t) :
@@ -25,14 +53,7 @@ namespace raft {
           timeout_(t),
           ios_(),
           work_(ios_),
-          socket_(ios_),
           threads_(){ 
-            tcp_resolver resolver(ios_);
-            tcp_resolver::query query(config_.host(), to_string(config_.port()));
-            auto iterator = resolver.resolve(query);
-
-            connect(socket_, iterator);
-
             for (size_t i = 0; i < threads_.size(); i++) {
               threads_[i] = shared_ptr<thread>(
                   new thread([this](){ ios_.run();}));
@@ -50,7 +71,6 @@ namespace raft {
 
         io_service ios_;
         io_service::work work_;
-        tcp_socket socket_;
         array<shared_ptr<thread>, 2> threads_;
     };
 
@@ -65,34 +85,38 @@ namespace raft {
     };
 
     void tcp::client::impl::append_entries_async(unique_ptr<append_entries_request> r, on_appended_handler ah, error_handler th) {
-      auto deadline = create_deadline(ios_, timeout_, th);
-      auto handler = [this, ah, deadline, th]() {
-        extend_deadline(deadline, timeout_, th);
-        read_message<raft_message>(socket_, [deadline, ah, th](raft_message m) {
-            deadline->cancel();
-            ah(m.append_entries_response());
-          }, th);
-      };
       // TODO protobuf performance
       raft_message m;
       m.set_discriminator(raft_message::APPEND_ENTRIES);
       m.set_allocated_append_entries_request(r.release());
-      write_message<raft_message>(socket_, m, handler, th);
+
+      auto conn = shared_ptr<tcp_client_connection>(new tcp_client_connection(config_, tcp_socket(ios_), timeout_));
+      conn->invoke_async(m,
+          [conn, ah](const raft_message& m){ ah(m.append_entries_response()); },
+          [conn, th](){th();});
     }
 
-    void tcp::client::impl::request_vote_async(unique_ptr<vote_request> r, on_voted_handler vh, error_handler eh) {
-      auto deadline = create_deadline(ios_, timeout_, eh);
-      auto handler = [this, vh, deadline, eh]() {
-        extend_deadline(deadline, timeout_, eh);
-        read_message<raft_message>(socket_, [deadline, vh, eh](raft_message m) {
-            deadline->cancel();
-            vh(m.vote_response());
-          }, eh);
-      };
+    void tcp::client::impl::request_vote_async(unique_ptr<vote_request> r, on_voted_handler vh, error_handler th) {
       // TODO protobuf performance
       raft_message m;
       m.set_discriminator(raft_message::VOTE);
       m.set_allocated_vote_request(r.release());
+
+      auto conn = shared_ptr<tcp_client_connection>(new tcp_client_connection(config_, tcp_socket(ios_), timeout_));
+      conn->invoke_async(m,
+          [conn, vh](const raft_message& m){ vh(m.vote_response()); },
+          [conn, th](){th();});
+    }
+
+    void tcp_client_connection::invoke_async(raft_message& m, std::function<void(const raft_message&)> h, error_handler eh) {
+      auto deadline = create_deadline(socket_.get_io_service(), timeout_, eh);
+      auto handler = [this, h, deadline, eh]() {
+        extend_deadline(deadline, timeout_, eh);
+        read_message<raft_message>(socket_, [deadline, h, eh](raft_message m) {
+            deadline->cancel();
+            h(m);
+          }, eh);
+      };
       write_message<raft_message>(socket_, m, handler, eh);
     }
 
