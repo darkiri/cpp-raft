@@ -23,7 +23,7 @@ namespace raft {
         tcp_client_connection(const config_server& config, tcp_socket socket, const timeout& t) :
           socket_(std::move(socket)),
           timeout_(t) {
-            LOG_TRACE << "Client - starting connection to " << config.host() << ":" << config.port();
+            LOG_TRACE << "Client - connecting to " << config.host() << ":" << config.port();
             tcp_resolver resolver(socket_.get_io_service());
             tcp_resolver::query query(config.host(), to_string(config.port()));
             auto iterator = resolver.resolve(query);
@@ -32,8 +32,8 @@ namespace raft {
         }
 
         ~tcp_client_connection() {
-          LOG_TRACE  << "Client - connection stopped.";
-          // TODO Socket close or shutdown enough?
+          socket_.close();
+          LOG_TRACE  << "Client - connection closed.";
         }
 
         void invoke_async(raft_message&, std::function<void(const raft_message&)> h, error_handler eh);

@@ -4,6 +4,7 @@
 #include <memory>
 #include <boost/asio.hpp>
 
+#include "logging.h"
 #include "rpc.h"
 
 namespace raft {
@@ -27,7 +28,9 @@ namespace raft {
           append_handler_(ah),
           vote_handler_(vh),
           error_handler_(th),
-          response_() {}
+          response_() {
+            LOG_TRACE << "Server - connection created";
+          }
 
         tcp_socket socket_;
         const timeout timeout_;

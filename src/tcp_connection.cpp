@@ -13,7 +13,7 @@ namespace raft {
     using namespace boost::system;
 
     void tcp_connection::start() {
-      LOG_TRACE << "Server - connection started";
+      LOG_TRACE << "Server - connection accepted";
       auto deadline = create_deadline(socket_.get_io_service(), timeout_, error_handler_);
       auto self = shared_from_this();
       auto handler = [this, self, deadline] (const raft_message& m) {
@@ -38,15 +38,15 @@ namespace raft {
         }
         auto write_handler = [this, self, deadline] () {
           deadline->cancel();
-          error_code ignored_ec;
-          socket_.shutdown(tcp_socket::shutdown_both, ignored_ec);
         };
         write_message<raft_message>(socket_, response_, write_handler, error_handler_);
       };
       read_message<raft_message>(socket_, handler, error_handler_);
     }
+
     tcp_connection::~tcp_connection(){
-      LOG_TRACE << "Server - connection stopped";
+      socket_.close();
+      LOG_TRACE << "Server - connection closed";
     }
   }
 }
