@@ -14,11 +14,11 @@ namespace raft {
   };
 
   TEST_F(InMemoryLogTest, Trim_Test) {
-    InMemoryLog log;
-    log.Append(create_log_entry(1));
-    log.Append(create_log_entry(2));
-    log.Append(create_log_entry(3));
-    log.Trim(log.Begin() + 1);
-    EXPECT_EQ(1, (--log.End())->term());
+    in_memory_log log;
+    log.append(create_log_entry(1));
+    log.append(create_log_entry(2));
+    log.append(create_log_entry(3));
+    log.trim(log.begin() + 1);
+    EXPECT_EQ(1, (--log.end())->term());
   }
 }

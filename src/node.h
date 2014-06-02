@@ -5,7 +5,7 @@
 #include "proto/raft.pb.h"
 
 namespace raft {
-  enum class NodeState {
+  enum class node_state {
     FOLLOWER = 0,
     CANDIDATE = 1,
     LEADER = 2
@@ -13,39 +13,39 @@ namespace raft {
 
   // this class is per design not thread safe
   template<class TLog>
-  class Node {
+  class node {
     public:
-      Node(TLog& log):
-        state_(NodeState::FOLLOWER),
+      node(TLog& log):
+        state_(node_state::FOLLOWER),
         commit_index_(0),
         voted_for_(0),
         log_(log) { };
 
-      NodeState GetState() const {
+      node_state state() const {
         return state_;
       };
-      unsigned int GetCommitIndex() const {
+      unsigned int commit_index() const {
         return commit_index_;
       };
-      unsigned int GetVotedFor() const {
+      unsigned int voted_for() const {
         return voted_for_;
       }
-      unsigned int GetCurrentTerm() const {
-        return log_.Size() > 0 ? (--log_.End())->term() : 0;
+      unsigned int current_term() const {
+        return log_.size() > 0 ? (--log_.end())->term() : 0;
       }
-      append_entries_response AppendEntries(const append_entries_request& args);
-      vote_response RequestVote(const vote_request& args);
+      append_entries_response append_entries(const append_entries_request& args);
+      vote_response request_vote(const vote_request& args);
 
-      void StartElection();
+      void start_election();
     private:
-      Node(const Node&);
-      Node& operator=(const Node&);
+      node(const node&);
+      node& operator=(const node&);
 
-      inline bool IsLogUpToDate(unsigned int index, unsigned int term) const;
-      inline void IncrementCurrentTerm(unsigned int newTerm);
-      inline void ConvertToFollower();
+      inline bool is_log_uptodate(unsigned int index, unsigned int term) const;
+      inline void increment_current_term(unsigned int newTerm);
+      inline void convert_to_follower();
 
-      NodeState state_;
+      node_state state_;
       unsigned int commit_index_;
       unsigned int voted_for_; // TODO must be persistent
       // TODO currentTerm?
