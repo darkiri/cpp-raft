@@ -6,13 +6,12 @@ namespace raft {
   append_entries_response node<TLog>::append_entries(const append_entries_request& args) {
     auto size = log_.size();
     auto logIter = log_.begin();
-    auto currentTerm = size != 0 ? (logIter + size -1)->term() : 0;
     auto prevIndexTerm = size != 0 ? (logIter + args.prev_log_index())->term() : 0;
 
-    auto success = size != 0 && args.term() >= currentTerm &&
+    auto success = size != 0 && args.term() >= log_.current_term() &&
       (size <= 1 || prevIndexTerm == args.prev_log_term());
 
-    if (success && args.term() > currentTerm){
+    if (success && args.term() > log_.current_term()){
       convert_to_follower();
     }
 
@@ -35,8 +34,8 @@ namespace raft {
             args.entries().end(),
             [this](const log_entry& e) { log_.append(e);});
       }
-    } else if (success && args.term() > currentTerm) {
-      increment_current_term(args.term());
+    } else if (success && args.term() > log_.current_term()) {
+      log_.set_current_term(args.term());
     }
 
     if (success) {
@@ -44,9 +43,8 @@ namespace raft {
         ? args.leader_commit()
         : log_.size()-1;
     }
-    currentTerm = size != 0 ? logIter[size-1].term() : 0;
     append_entries_response response;
-    response.set_term(currentTerm);
+    response.set_term(log_.current_term());
     response.set_success(success);
     return response;
   }
@@ -58,14 +56,14 @@ namespace raft {
     auto currentTerm = size != 0 ? (logIter + size -1)->term() : 0;
 
     auto success = args.term() >= currentTerm &&
-      (voted_for_ == 0 || voted_for_ == args.candidate_id()) &&
+      (log_.voted_for() == 0 || log_.voted_for() == args.candidate_id()) &&
       is_log_uptodate(args.last_log_index(), args.last_log_term());
     if (success) {
-      voted_for_ = args.candidate_id();
+      log_.set_voted_for(args.candidate_id());
     }
     if (args.term() > currentTerm) {
       convert_to_follower();
-      increment_current_term(args.term());
+      log_.set_current_term(args.term());
     }
     vote_response response;
     response.set_term(currentTerm);
@@ -84,14 +82,7 @@ namespace raft {
   template<class Iter>
   void node<Iter>::start_election(){
     state_ = node_state::CANDIDATE;
-    increment_current_term(current_term()+1);
-  }
-
-  template<class Iter>
-  void node<Iter>::increment_current_term(unsigned int newTerm){
-    log_entry e;
-    e.set_term(newTerm);
-    log_.append(e);
+    log_.set_current_term(log_.current_term() + 1);
   }
 
   template<class Iter>

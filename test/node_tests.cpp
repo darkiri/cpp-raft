@@ -61,6 +61,7 @@ namespace raft {
     in_memory_log log;
     log.append(create_log_entry(1));
     log.append(create_log_entry(2));
+    log.set_current_term(2);
     InMemoryNode node(log);
     auto args = make_append_args(1, 0, 0);
     auto res = node.append_entries(args);
@@ -124,6 +125,7 @@ namespace raft {
     log.append(create_log_entry(2));
     log.append(create_log_entry(2));
     log.append(create_log_entry(3));
+    log.set_current_term(3);
     InMemoryNode node(log);
     auto args = make_append_args(5, 1, 2);
     auto e = args.add_entries();
@@ -157,6 +159,7 @@ namespace raft {
     in_memory_log log;
     log.append(create_log_entry(1));
     log.append(create_log_entry(2));
+    log.set_current_term(2);
     InMemoryNode node(log);
     auto args = make_append_args(2, 1, 2);
     auto res = node.append_entries(args);
@@ -171,6 +174,7 @@ namespace raft {
     log.append(create_log_entry(1));
     log.append(create_log_entry(2));
     log.append(create_log_entry(2));
+    log.set_current_term(2);
     InMemoryNode node(log);
     auto args = make_append_args(2, 1, 2, 1);
     auto res = node.append_entries(args);
@@ -228,7 +232,7 @@ namespace raft {
     auto args = MakeRequestVoteArgs(2, 1, 1, 2);
     auto res = node.request_vote(args);
     EXPECT_TRUE(res.granted());
-    EXPECT_EQ(1, node.voted_for());
+    EXPECT_EQ(1, log.voted_for());
   }
 
   TEST_F(NodeTest, RequestVote_Returns_True_If_Already_VotedFor_Same_Candiate) {
@@ -245,9 +249,10 @@ namespace raft {
   TEST_F(NodeTest, StartElection_IncrementCurrentTerm){
     in_memory_log log;
     log.append(create_log_entry(2));
+    log.set_current_term(2);
     InMemoryNode node(log);
     node.start_election();
-    EXPECT_EQ(3, node.current_term());
+    EXPECT_EQ(3, log.current_term());
   }
 
   TEST_F(NodeTest, StartElection_ConvertsToCandidate){
@@ -271,20 +276,22 @@ namespace raft {
   TEST_F(NodeTest, KeepAlive_FromNewLeader_UpdateCurrentTerm) {
     in_memory_log log;
     log.append(create_log_entry(2));
+    log.set_current_term(2);
     InMemoryNode node(log);
     auto args = make_append_args(3, 0, 2);
     auto res = node.append_entries(args);
     EXPECT_TRUE(res.success());
-    EXPECT_EQ(3, node.current_term());
+    EXPECT_EQ(3, log.current_term());
   }
 
   TEST_F(NodeTest, RequestVote_FromNewLeader_UpdateCurrentTerm) {
     in_memory_log log;
     log.append(create_log_entry(2));
+    log.set_current_term(2);
     InMemoryNode node(log);
     auto args = MakeRequestVoteArgs(3, 0, 0, 0);
     node.request_vote(args);
-    EXPECT_EQ(3, node.current_term());
+    EXPECT_EQ(3, log.current_term());
   }
 
   TEST_F(NodeTest, RequestVote_FromNewLeader_ConvertToFollower) {

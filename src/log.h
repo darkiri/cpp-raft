@@ -10,7 +10,9 @@ namespace raft {
   typedef std::vector<log_entry>::const_iterator const_iterator;
   class in_memory_log {
       public:
-        in_memory_log() {};
+        in_memory_log() :
+          entries_(),
+          voted_for_() {};
 
         const_iterator begin() const{
           return entries_.begin();
@@ -28,11 +30,25 @@ namespace raft {
           auto  nonConstIter = entries_.begin() + (iter - entries_.begin());
           entries_.erase(nonConstIter, entries_.end());
         }
+        unsigned int voted_for() {
+          return voted_for_;
+        }
+        void set_voted_for(unsigned int candidate_id){
+          voted_for_ = candidate_id;
+        }
+        unsigned int current_term() {
+          return current_term_;
+        }
+        void set_current_term(unsigned int term){
+          current_term_ = term;
+        }
       private:
         in_memory_log(const in_memory_log&);
         in_memory_log& operator=(const in_memory_log&);
 
         std::vector<log_entry> entries_;
+        unsigned int voted_for_;
+        unsigned int current_term_;
     };
   }
 #endif
