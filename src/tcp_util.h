@@ -20,7 +20,7 @@ namespace raft {
       data[3] = n & 0xFF;
     }
 
-    inline int deserialize_int(std::array<char, 4> data) {
+    inline int deserialize_int(char data[4]) {
       auto res = 0;
       for (auto i = 0; i < 4; i++){
         res += res*256 + data[i];
@@ -58,24 +58,34 @@ namespace raft {
 
     template<typename Message>
     void read_message(tcp_socket& s, std::function<void(const Message&)> h, error_handler eh) {
-      std::array<char, TCP_HEADER_LENGTH> data;
-      LOG_TRACE <<  "Reading header: " << TCP_HEADER_LENGTH << " bytes";
-      read(s, boost::asio::buffer(&data, TCP_HEADER_LENGTH));
-      auto size = deserialize_int(data);
-      auto payload = std::shared_ptr<char>(new char[size]);
-      auto handler = [payload, h, eh] (const boost::system::error_code& ec, size_t size) {
-        if (!ec) {
-          LOG_TRACE << "Reading completed: " << size << " bytes";
-          Message message;
-          message.ParseFromArray(payload.get(), size);
-          h(message);
+      auto header = std::shared_ptr<char>(new char[TCP_HEADER_LENGTH]);
+
+      auto header_read_handler = [&s, header, h, eh](const boost::system::error_code& ec1, size_t size) {
+        if (!ec1) {
+          LOG_TRACE << "Header reading completed: " << size << " bytes";
+          auto size = deserialize_int(header.get());
+          auto payload = std::shared_ptr<char>(new char[size]);
+          auto handler = [payload, h, eh] (const boost::system::error_code& ec, size_t size) {
+            if (!ec) {
+              LOG_TRACE << "Reading completed: " << size << " bytes";
+              Message message;
+              message.ParseFromArray(payload.get(), size);
+              h(message);
+            } else {
+              LOG_ERROR << "Error reading from socket: " << ec.value() << " - " << ec.message();
+              eh();
+            }
+          };
+          LOG_TRACE <<  "Ready to read payload: " << size << " bytes";
+          async_read(s, boost::asio::buffer(payload.get(), size), handler);
         } else {
-          LOG_ERROR << "Error reading from socket: " << ec.value() << " - " << ec.message();
+          LOG_ERROR << "Error reading from socket: " << ec1.value() << " - " << ec1.message();
           eh();
-        }
+        };
       };
-      LOG_TRACE <<  "Reading payload: " << size << " bytes";
-      async_read(s, boost::asio::buffer(payload.get(), size), handler);
+
+      LOG_TRACE <<  "Ready to read header: " << TCP_HEADER_LENGTH << " bytes";
+      async_read(s, boost::asio::buffer(header.get(), TCP_HEADER_LENGTH), header_read_handler);
     }
 
     inline std::shared_ptr<boost::asio::deadline_timer> create_deadline(boost::asio::io_service& ios, timeout t, error_handler h) {
