@@ -67,16 +67,14 @@ namespace raft {
           [](){LOG_INFO << "Server processing failure.";});
       s.run();
 
-      rpc::tcp::client c(conf, t);
+      rpc::tcp::client c(conf, bind(&TcpSmokeTests::on_appended, this, _1), [](vote_response){});
       unique_ptr<append_entries_request> r(new append_entries_request());
       r->set_term(223);
       r->set_leader_id(2);
       r->set_prev_log_index(222);
       r->set_prev_log_term(333);
       r->set_leader_commit(131);
-      c.append_entries_async(move(r), 
-          bind(&TcpSmokeTests::on_appended, this, _1),
-          [](){LOG_INFO << "Error requesting append entries.";});
+      c.append_entries_async(move(r), [](){LOG_INFO << "Error requesting append entries.";});
 
       mutex mtx;
       unique_lock<mutex> lck(mtx);
@@ -98,15 +96,13 @@ namespace raft {
           [](){LOG_INFO << "Server processing failure.";});
       s.run();
 
-      rpc::tcp::client c(conf, t);
+      rpc::tcp::client c(conf, [](append_entries_response){}, bind(&TcpSmokeTests::on_voted, this, _1));
       unique_ptr<vote_request> r(new vote_request());
       r->set_term(223);
       r->set_candidate_id(10);
       r->set_last_log_term(333);
       r->set_last_log_index(222);
-      c.request_vote_async(move(r), 
-          bind(&TcpSmokeTests::on_voted, this, _1),
-          [](){LOG_INFO << "Error requesting vote.";});
+      c.request_vote_async(move(r), [](){LOG_INFO << "Client: error requesting vote.";});
 
       mutex mtx;
       unique_lock<mutex> lck(mtx);
@@ -129,26 +125,23 @@ namespace raft {
           [](){LOG_INFO << "Server processing failure.";});
       s.run();
 
-      rpc::tcp::client c(conf, t);
+      rpc::tcp::client c(conf, 
+          bind(&TcpSmokeTests::on_appended, this, _1),
+          bind(&TcpSmokeTests::on_voted, this, _1));
       unique_ptr<append_entries_request> r(new append_entries_request());
       r->set_term(223);
       r->set_leader_id(2);
       r->set_prev_log_index(222);
       r->set_prev_log_term(333);
       r->set_leader_commit(131);
-      c.append_entries_async(move(r), 
-          bind(&TcpSmokeTests::on_appended, this, _1),
-          [](){LOG_INFO << "Error requesting append entries.";});
-
+      c.append_entries_async(move(r), [](){LOG_INFO << "Client: error requesting append entries.";});
 
       unique_ptr<vote_request> r2(new vote_request());
       r2->set_term(223);
       r2->set_candidate_id(10);
       r2->set_last_log_term(333);
       r2->set_last_log_index(222);
-      c.request_vote_async(move(r2), 
-          bind(&TcpSmokeTests::on_voted, this, _1),
-          [](){LOG_INFO << "Error requesting vote.";});
+      c.request_vote_async(move(r2), [](){LOG_INFO << "Client: error requesting vote.";});
 
       mutex mtx;
       unique_lock<mutex> lck(mtx);
@@ -161,6 +154,5 @@ namespace raft {
       EXPECT_TRUE(vote_response_.granted());
       s.stop();
     }
-
   }
 }

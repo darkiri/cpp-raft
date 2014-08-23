@@ -3,6 +3,7 @@
 #include "tcp_connection.h"
 #include "tcp_util.h"
 #include "logging.h"
+#include <thread>
 
 namespace raft {
   namespace rpc {
@@ -38,6 +39,9 @@ namespace raft {
         }
         auto write_handler = [this, self, deadline] () {
           deadline->cancel();
+          LOG_TRACE << "Server - shutdown connection";
+          boost::system::error_code ignored_ec;
+          socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignored_ec);
         };
         write_message_async(socket_, response_, write_handler, error_handler_);
       };

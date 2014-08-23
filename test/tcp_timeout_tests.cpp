@@ -43,7 +43,9 @@ namespace raft {
           [](){});
       s.run();
 
-      rpc::tcp::client c(conf, t);
+      rpc::tcp::client c(conf, 
+          [](const append_entries_response&){},
+          [](const vote_response&){});
       unique_ptr<append_entries_request> r(new append_entries_request());
       r->set_term(223);
       r->set_leader_id(2);
@@ -51,7 +53,6 @@ namespace raft {
       r->set_prev_log_term(333);
       r->set_leader_commit(131);
       c.append_entries_async(move(r), 
-          [](const append_entries_response&){},
           bind(&TcpTimeoutTests::on_timeout, this));
 
       mutex mtx;
@@ -81,15 +82,15 @@ namespace raft {
           [](){});
       s.run();
 
-      rpc::tcp::client c(conf, t);
+      rpc::tcp::client c(conf,
+          [](const append_entries_response&){},
+          [](const vote_response&){});
       unique_ptr<vote_request> r(new vote_request());
       r->set_term(223);
       r->set_candidate_id(2);
       r->set_last_log_term(222);
       r->set_last_log_index(333);
-      c.request_vote_async(move(r), 
-          [](const vote_response&){},
-          bind(&TcpTimeoutTests::on_timeout, this));
+      c.request_vote_async(move(r), bind(&TcpTimeoutTests::on_timeout, this));
 
       mutex mtx;
       unique_lock<mutex> lck(mtx);
