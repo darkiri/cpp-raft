@@ -39,9 +39,9 @@ namespace raft {
         auto write_handler = [this, self, deadline] () {
           deadline->cancel();
         };
-        write_message<raft_message>(socket_, response_, write_handler, error_handler_);
+        write_message_async(socket_, response_, write_handler, error_handler_);
       };
-      read_message<raft_message>(socket_, handler, error_handler_);
+      read_message_async(socket_, handler, error_handler_);
     }
 
     tcp_connection::~tcp_connection(){

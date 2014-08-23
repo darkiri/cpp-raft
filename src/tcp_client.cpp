@@ -7,6 +7,7 @@
 
 #include "rpc.h"
 #include "tcp_util.h"
+#include "logging.h"
 
 namespace raft {
   namespace rpc {
@@ -112,12 +113,12 @@ namespace raft {
       auto deadline = create_deadline(socket_.get_io_service(), timeout_, eh);
       auto handler = [this, h, deadline, eh]() {
         extend_deadline(deadline, timeout_, eh);
-        read_message<raft_message>(socket_, [deadline, h, eh](raft_message m) {
+        read_message_async(socket_, [deadline, h, eh](raft_message m) {
             deadline->cancel();
             h(m);
           }, eh);
       };
-      write_message<raft_message>(socket_, m, handler, eh);
+      write_message_async(socket_, m, handler, eh);
     }
 
     tcp::client::client(const config_server& c, const timeout& t) :

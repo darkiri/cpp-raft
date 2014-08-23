@@ -14,7 +14,7 @@ namespace raft {
         tcp_writeonly_client(const config_server& c);
         ~tcp_writeonly_client();
 
-        void write(const append_entries_request&);
+        void write(append_entries_request&);
       private:
         const config_server& config_;
 

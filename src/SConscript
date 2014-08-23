@@ -10,6 +10,7 @@ proto_files = env.Protoc(
 raft_o.extend(env.StaticObject([
     "node.cpp",
     "log.cpp",
+    "tcp_util.cpp",
     "tcp_server.cpp",
     "tcp_connection.cpp",
     "tcp_client.cpp",

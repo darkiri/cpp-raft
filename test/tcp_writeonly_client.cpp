@@ -1,4 +1,5 @@
 #include "tcp_writeonly_client.h"
+#include "logging.h"
 
 namespace raft {
   namespace rpc {
@@ -27,8 +28,11 @@ namespace raft {
       LOG_INFO << "tcp_writeonly_client stopped.";
     };
 
-    void tcp_writeonly_client::write(const append_entries_request& r) {
-      write_message<append_entries_request>(socket_, r, []() {}, [](){});
+    void tcp_writeonly_client::write(append_entries_request& r) {
+      raft_message m;
+      m.set_discriminator(raft_message::APPEND_ENTRIES);
+      m.set_allocated_append_entries_request(&r);
+      write_message_async(socket_, m, [](){}, [](){});
     }
   }
 }
