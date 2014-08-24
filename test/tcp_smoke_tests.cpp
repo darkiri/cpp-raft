@@ -113,6 +113,40 @@ namespace raft {
       s.stop();
     }
 
+    TEST_F(TcpSmokeTests, AppendEntries_AppendEntries) {
+      timeout t;
+      config_server conf;
+      conf.set_id(1);
+      conf.set_port(7574);
+
+      rpc::tcp::server s(conf, t,
+          append_test_handler,
+          vote_test_handler,
+          [](){LOG_INFO << "Server processing failure.";});
+      s.run();
+
+      rpc::tcp::client c(conf, bind(&TcpSmokeTests::on_appended, this, _1), [](vote_response){});
+
+      unique_ptr<append_entries_request> r(new append_entries_request());
+      r->set_term(223);
+      r->set_leader_id(2);
+      r->set_prev_log_index(222);
+      r->set_prev_log_term(333);
+      r->set_leader_commit(131);
+      c.append_entries_async(move(r), [](){LOG_INFO << "Error requesting append entries #1.";});
+
+      r->set_term(224);
+      c.append_entries_async(move(r), [](){LOG_INFO << "Error requesting append entries #2.";});
+
+      mutex mtx;
+      unique_lock<mutex> lck(mtx);
+      processed_.wait_for(lck, std::chrono::seconds(1));
+
+      EXPECT_EQ(append_response_.term(), 2);
+      EXPECT_TRUE(append_response_.success());
+      s.stop();
+    }
+
     TEST_F(TcpSmokeTests, AppendEntries_RequestVote) {
       timeout t;
       config_server conf;
