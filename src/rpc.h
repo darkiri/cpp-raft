@@ -16,11 +16,10 @@ namespace raft {
 
     class tcp {
       public:
-        // NOTE: the server checks timeouts for the duration between incoming call
-        // and end of the outgoing socket write
+        // NOTE: timeout handling is moved to the code that uses the server.
         class server {
           public:
-            server(const config_server& c, const timeout&, append_handler, vote_handler, error_handler); 
+            server(const config_server& c, append_handler, vote_handler, error_handler); 
             ~server();
 
             void run();
@@ -31,16 +30,20 @@ namespace raft {
             std::unique_ptr<impl> pimpl_;
         };
 
+        // single tcp connection per client
+        // TODO: reconnect
         // NOTE: no timeout for the client.
         // all requests are asynchron, all responces do not depend directly on requests
         // timeout handling is moved to the code that uses the client.
+        // TODO: timeout for connect?
         class client {
           public:
-            client(const config_server&, on_appended_handler, on_voted_handler);
+            client(const config_server&, on_appended_handler, on_voted_handler, error_handler);
             ~client();
 
-            void append_entries_async(std::unique_ptr<append_entries_request>, error_handler);
-            void request_vote_async(std::unique_ptr<vote_request>, error_handler);
+            // these two methods may not be called simultaneously
+            void append_entries_async(std::unique_ptr<append_entries_request>);
+            void request_vote_async(std::unique_ptr<vote_request>);
           private:
             struct impl;
             std::unique_ptr<impl> pimpl_;

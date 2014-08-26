@@ -42,7 +42,7 @@ void raft::rpc::write_message_async(tcp_socket& s, const raft_message& request, 
       eh();
     }
   };
-  LOG_TRACE <<  "Writing: " << get_size(request) << " bytes";
+  LOG_TRACE << "Writing: " << get_size(request) << " bytes";
   async_write(s, boost::asio::buffer(data.get(), get_size(request)), handler);
 }
 
@@ -51,30 +51,24 @@ void raft::rpc::read_message_async(tcp_socket& s, std::function<void(const raft_
 
   auto header_read_handler = [&s, header, h, eh](const boost::system::error_code& ec1, size_t size) {
     if (!ec1) {
-      LOG_TRACE << "Header reading completed: " << size << " bytes";
       auto size = deserialize_int(header.get());
       auto payload = std::shared_ptr<char>(new char[size]);
-      auto handler = [payload, h, eh] (const boost::system::error_code& ec, size_t size) {
-        if (!ec) {
-          LOG_TRACE << "Reading completed: " << size << " bytes";
+
+      LOG_TRACE << "Ready to read payload: " << size << " bytes";
+      read(s, boost::asio::buffer(payload.get(), size), boost::asio::transfer_exactly(size));
+
+          LOG_TRACE << "Reading completed: " << size << " bytes payload";
           raft_message message;
           message.ParseFromArray(payload.get(), size);
           h(message);
-        } else {
-          LOG_ERROR << "Error reading from socket: " << ec.value() << " - " << ec.message();
-          eh();
-        }
-      };
-      LOG_TRACE <<  "Ready to read payload: " << size << " bytes";
-      async_read(s, boost::asio::buffer(payload.get(), size), handler);
     } else {
       LOG_ERROR << "Error reading from socket: " << ec1.value() << " - " << ec1.message();
       eh();
     };
   };
 
-  LOG_TRACE <<  "Ready to read header: " << TCP_HEADER_LENGTH << " bytes";
-  async_read(s, boost::asio::buffer(header.get(), TCP_HEADER_LENGTH), header_read_handler);
+  LOG_TRACE << "Ready to read header: " << TCP_HEADER_LENGTH << " bytes";
+  async_read(s, boost::asio::buffer(header.get(), TCP_HEADER_LENGTH), boost::asio::transfer_exactly(TCP_HEADER_LENGTH), header_read_handler);
 }
 
 std::shared_ptr<boost::asio::deadline_timer> raft::rpc::create_deadline(boost::asio::io_service& ios, timeout t, error_handler h) {

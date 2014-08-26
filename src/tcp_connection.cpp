@@ -14,11 +14,8 @@ namespace raft {
     using namespace boost::system;
 
     void tcp_connection::start() {
-      LOG_TRACE << "Server - connection accepted";
-      auto deadline = create_deadline(socket_.get_io_service(), timeout_, error_handler_);
-      auto self = shared_from_this();
-      auto handler = [this, self, deadline] (const raft_message& m) {
-        extend_deadline(deadline, timeout_, error_handler_);
+      auto handler = [this] (const raft_message& m) {
+        LOG_TRACE << "Server - message read:" << m.discriminator();
         // TODO protobuf performance
         response_.set_discriminator(m.discriminator());
         switch (m.discriminator()) {
@@ -37,20 +34,20 @@ namespace raft {
           default:
             break;
         }
-        auto write_handler = [this, self, deadline] () {
-          deadline->cancel();
-          LOG_TRACE << "Server - shutdown connection";
-          boost::system::error_code ignored_ec;
-          socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignored_ec);
+        auto write_handler = [this] () {
+          LOG_TRACE << "Server - message written:" << response_.discriminator();
+          start();
         };
         write_message_async(socket_, response_, write_handler, error_handler_);
       };
       read_message_async(socket_, handler, error_handler_);
     }
 
-    tcp_connection::~tcp_connection(){
+    void tcp_connection::close(){
+      boost::system::error_code ignored_ec;
+      socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_receive, ignored_ec);
       socket_.close();
-      LOG_TRACE << "Server - connection closed";
+      LOG_INFO << "Server - connection closed";
     }
   }
 }

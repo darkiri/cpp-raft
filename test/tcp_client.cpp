@@ -25,21 +25,21 @@ int main() {
   config.set_id(1);
   config.set_port(7576);
   timeout t;
-  rpc::tcp::client c(config, on_appended, on_voted);
+  rpc::tcp::client c(config, on_appended, on_voted, on_timeout);
   unique_ptr<append_entries_request> r(new append_entries_request());
   r->set_term(223);
   r->set_leader_id(2);
   r->set_prev_log_index(222);
   r->set_prev_log_term(333);
   r->set_leader_commit(131);
-  c.append_entries_async(move(r), on_timeout);
+  c.append_entries_async(move(r));
 
   unique_ptr<vote_request> r2(new vote_request());
   r2->set_term(223);
   r2->set_candidate_id(2);
   r2->set_last_log_term(222);
   r2->set_last_log_index(333);
-  c.request_vote_async(move(r2), on_timeout);
+  c.request_vote_async(move(r2));
 
   char* tmp = 0;
   cin.getline(tmp, 0);

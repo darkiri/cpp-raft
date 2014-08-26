@@ -28,11 +28,10 @@ void on_timeout() {
 
 int main() {
   init_log();
-  timeout t;
   config_server c;
   c.set_id(1);
   c.set_port(7576);
-  rpc::tcp::server s(c, t, test_handler, vote_handler, on_timeout);
+  rpc::tcp::server s(c, test_handler, vote_handler, on_timeout);
   s.run();
   char* tmp = 0;
   cin.getline(tmp, 0);
