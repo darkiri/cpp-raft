@@ -22,16 +22,13 @@ unique_ptr<vote_response> vote_handler(const vote_request& r) {
   res->set_granted(true);
   return res;
 }
-void on_timeout(const boost::system::error_code&) {
-  LOG_WARN << "Timeout in Server.";
-}
 
 int main() {
   init_log();
   config_server c;
   c.set_id(1);
   c.set_port(7576);
-  rpc::tcp::server s(c, test_handler, vote_handler, on_timeout);
+  rpc::tcp::server s(c, test_handler, vote_handler);
   s.run();
   char* tmp = 0;
   cin.getline(tmp, 0);

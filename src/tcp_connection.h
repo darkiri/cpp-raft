@@ -10,11 +10,13 @@
 namespace raft {
   namespace rpc {
     typedef boost::asio::ip::tcp::socket tcp_socket;
+    class tcp_connection;
+    typedef std::function<void(tcp_connection&, const boost::system::error_code&)> connection_error_handler;
 
     class tcp_connection {
       public:
-        static std::shared_ptr<tcp_connection> create(tcp_socket socket, append_handler ah, vote_handler vh, error_handler th) {
-          return std::shared_ptr<tcp_connection>(new tcp_connection(std::move(socket), ah, vh, th));
+        static std::shared_ptr<tcp_connection> create(tcp_socket socket, append_handler ah, vote_handler vh, connection_error_handler eh) {
+          return std::shared_ptr<tcp_connection>(new tcp_connection(std::move(socket), ah, vh, eh));
         }
         tcp_socket& socket() {
           return socket_;
@@ -22,7 +24,7 @@ namespace raft {
         void start();
         void close();
       private:
-        tcp_connection(tcp_socket socket, append_handler ah, vote_handler vh, error_handler th) :
+        tcp_connection(tcp_socket socket, append_handler ah, vote_handler vh, connection_error_handler th) :
           socket_(std::move(socket)),
           append_handler_(ah),
           vote_handler_(vh),
@@ -36,7 +38,7 @@ namespace raft {
         tcp_socket socket_;
         append_handler append_handler_;
         vote_handler vote_handler_;
-        error_handler error_handler_;
+        connection_error_handler error_handler_;
         raft_message response_;
     };
   }

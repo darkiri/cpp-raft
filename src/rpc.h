@@ -20,7 +20,7 @@ namespace raft {
         // NOTE: timeout handling is moved to the code that uses the server.
         class server {
           public:
-            server(const config_server& c, append_handler, vote_handler, error_handler); 
+            server(const config_server& c, append_handler, vote_handler); 
             ~server();
 
             void run();

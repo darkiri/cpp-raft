@@ -46,8 +46,7 @@ namespace raft {
       if (ec == boost::asio::error::operation_aborted) {
         LOG_WARN << "Read operation aborted. Connection can be disposed.";
       } else {
-        // TODO: reconnect
-        LOG_ERROR << "Error reading from socket: " << ec.value() << " - " << ec.message();
+        error_handler_(*this, ec);
       }
     }
 
@@ -55,8 +54,7 @@ namespace raft {
       if (ec == boost::asio::error::operation_aborted) {
         LOG_WARN << "Write operation aborted. Connection can be disposed.";
       } else {
-        // TODO: reconnect
-        LOG_ERROR << "Error writing to socket: " << ec.value() << " - " << ec.message();
+        error_handler_(*this, ec);
       }
     }
 

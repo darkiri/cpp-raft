@@ -19,11 +19,10 @@ namespace raft {
 
     struct tcp::server::impl {
       public:
-        impl(const config_server& c, append_handler ah, vote_handler vh, error_handler th) : 
+        impl(const config_server& c, append_handler ah, vote_handler vh) : 
           config_(c),
           append_handler_(ah),
           vote_handler_(vh),
-          error_handler_(th),
           thread_pool_(),
           ios_(),
           acceptor_(ios_),
@@ -44,12 +43,12 @@ namespace raft {
 
         void start_accept();
         void handle_accept(shared_ptr<tcp_connection>, const error_code&);
+        void on_connection_error(tcp_connection&, const error_code&);
 
         const config_server& config_;
 
         append_handler append_handler_;
         vote_handler vote_handler_;
-        error_handler error_handler_;
         array<shared_ptr<thread>, THREAD_POOL_SIZE> thread_pool_;
 
         io_service ios_;
@@ -84,11 +83,17 @@ namespace raft {
     }
 
     void tcp::server::impl::start_accept(){
-      auto conn = tcp_connection::create(move(socket_), append_handler_, vote_handler_, error_handler_);
+      auto eh = bind(&tcp::server::impl::on_connection_error, this, _1, _2);
+      auto conn = tcp_connection::create(move(socket_), append_handler_, vote_handler_, eh);
       // TODO: connection monitoring, kill timed out connections
       connection_pool_.push_back(conn);
       auto handler = bind(&impl::handle_accept, this, conn, _1);
       acceptor_.async_accept(conn->socket(), handler);
+    }
+
+    void tcp::server::impl::on_connection_error(tcp_connection&, const error_code& ec) {
+        // TODO: reconnect
+        LOG_ERROR << "Error reading from socket: " << ec.value() << " - " << ec.message();
     }
 
     void tcp::server::impl::handle_accept(shared_ptr<tcp_connection> conn, const error_code& error) {
@@ -101,8 +106,8 @@ namespace raft {
       }
     }
 
-    tcp::server::server(const config_server& c, append_handler ah, vote_handler vh, error_handler th) :
-      pimpl_(new tcp::server::impl(c, ah, vh, th)) {} 
+    tcp::server::server(const config_server& c, append_handler ah, vote_handler vh) :
+      pimpl_(new tcp::server::impl(c, ah, vh)) {} 
 
     void tcp::server::run() {
       pimpl_->run();

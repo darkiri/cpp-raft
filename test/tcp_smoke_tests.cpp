@@ -61,10 +61,7 @@ namespace raft {
       conf.set_id(1);
       conf.set_port(7574);
 
-      rpc::tcp::server s(conf,
-          append_test_handler,
-          vote_test_handler,
-          [](const boost::system::error_code&){LOG_INFO << "Server processing failure.";});
+      rpc::tcp::server s(conf, append_test_handler, vote_test_handler);
       s.run();
 
       rpc::tcp::client c(conf, bind(&TcpSmokeTests::on_appended, this, _1), [](vote_response){},[](const boost::system::error_code&){LOG_INFO << "Error requesting append entries.";});
@@ -90,10 +87,7 @@ namespace raft {
       config_server conf;
       conf.set_id(1);
       conf.set_port(7574);
-      rpc::tcp::server s(conf,
-          append_test_handler,
-          vote_test_handler,
-          [](const boost::system::error_code&){LOG_INFO << "Server processing failure.";});
+      rpc::tcp::server s(conf, append_test_handler, vote_test_handler);
       s.run();
 
       rpc::tcp::client c(conf, [](append_entries_response){}, bind(&TcpSmokeTests::on_voted, this, _1),[](const boost::system::error_code&){LOG_INFO << "Error requesting append entries.";});
@@ -119,10 +113,7 @@ namespace raft {
       conf.set_id(1);
       conf.set_port(7574);
 
-      rpc::tcp::server s(conf,
-          append_test_handler,
-          vote_test_handler,
-          [](const boost::system::error_code&){LOG_INFO << "Server processing failure.";});
+      rpc::tcp::server s(conf, append_test_handler, vote_test_handler);
       s.run();
 
       rpc::tcp::client c(conf, bind(&TcpSmokeTests::on_appended, this, _1), [](vote_response){},[](const boost::system::error_code&){LOG_INFO << "Error requesting append entries.";});
@@ -158,10 +149,7 @@ namespace raft {
       conf.set_id(1);
       conf.set_port(7574);
 
-      rpc::tcp::server s(conf,
-          append_test_handler,
-          vote_test_handler,
-          [](const boost::system::error_code&){LOG_INFO << "Server processing failure.";});
+      rpc::tcp::server s(conf, append_test_handler, vote_test_handler);
       s.run();
 
       rpc::tcp::client c(conf, 
