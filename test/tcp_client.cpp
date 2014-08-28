@@ -15,7 +15,7 @@ void on_voted(const vote_response& r) {
   LOG_INFO << "Vote response: term = " << r.term() << ", granted = " << r.granted();
 }
 
-void on_timeout() {
+void on_timeout(const boost::system::error_code&) {
   LOG_INFO << "An error occured";
 }
 

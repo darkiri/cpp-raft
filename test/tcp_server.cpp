@@ -22,7 +22,7 @@ unique_ptr<vote_response> vote_handler(const vote_request& r) {
   res->set_granted(true);
   return res;
 }
-void on_timeout() {
+void on_timeout(const boost::system::error_code&) {
   LOG_WARN << "Timeout in Server.";
 }
 

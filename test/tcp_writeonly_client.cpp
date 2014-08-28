@@ -32,7 +32,7 @@ namespace raft {
       raft_message m;
       m.set_discriminator(raft_message::APPEND_ENTRIES);
       m.set_allocated_append_entries_request(&r);
-      write_message_async(socket_, m, [](){}, [](){});
+      write_message_async(socket_, m, [](){}, [](const boost::system::error_code&){});
     }
   }
 }

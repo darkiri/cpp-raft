@@ -64,10 +64,10 @@ namespace raft {
       rpc::tcp::server s(conf,
           append_test_handler,
           vote_test_handler,
-          [](){LOG_INFO << "Server processing failure.";});
+          [](const boost::system::error_code&){LOG_INFO << "Server processing failure.";});
       s.run();
 
-      rpc::tcp::client c(conf, bind(&TcpSmokeTests::on_appended, this, _1), [](vote_response){},[](){LOG_INFO << "Error requesting append entries.";});
+      rpc::tcp::client c(conf, bind(&TcpSmokeTests::on_appended, this, _1), [](vote_response){},[](const boost::system::error_code&){LOG_INFO << "Error requesting append entries.";});
       unique_ptr<append_entries_request> r(new append_entries_request());
       r->set_term(223);
       r->set_leader_id(2);
@@ -93,10 +93,10 @@ namespace raft {
       rpc::tcp::server s(conf,
           append_test_handler,
           vote_test_handler,
-          [](){LOG_INFO << "Server processing failure.";});
+          [](const boost::system::error_code&){LOG_INFO << "Server processing failure.";});
       s.run();
 
-      rpc::tcp::client c(conf, [](append_entries_response){}, bind(&TcpSmokeTests::on_voted, this, _1),[](){LOG_INFO << "Error requesting append entries.";});
+      rpc::tcp::client c(conf, [](append_entries_response){}, bind(&TcpSmokeTests::on_voted, this, _1),[](const boost::system::error_code&){LOG_INFO << "Error requesting append entries.";});
       unique_ptr<vote_request> r(new vote_request());
       r->set_term(223);
       r->set_candidate_id(10);
@@ -122,10 +122,10 @@ namespace raft {
       rpc::tcp::server s(conf,
           append_test_handler,
           vote_test_handler,
-          [](){LOG_INFO << "Server processing failure.";});
+          [](const boost::system::error_code&){LOG_INFO << "Server processing failure.";});
       s.run();
 
-      rpc::tcp::client c(conf, bind(&TcpSmokeTests::on_appended, this, _1), [](vote_response){},[](){LOG_INFO << "Error requesting append entries.";});
+      rpc::tcp::client c(conf, bind(&TcpSmokeTests::on_appended, this, _1), [](vote_response){},[](const boost::system::error_code&){LOG_INFO << "Error requesting append entries.";});
 
       unique_ptr<append_entries_request> r(new append_entries_request());
       r->set_term(223);
@@ -161,12 +161,12 @@ namespace raft {
       rpc::tcp::server s(conf,
           append_test_handler,
           vote_test_handler,
-          [](){LOG_INFO << "Server processing failure.";});
+          [](const boost::system::error_code&){LOG_INFO << "Server processing failure.";});
       s.run();
 
       rpc::tcp::client c(conf, 
           bind(&TcpSmokeTests::on_appended, this, _1),
-          bind(&TcpSmokeTests::on_voted, this, _1),[](){LOG_INFO << "Error requesting append entries.";});
+          bind(&TcpSmokeTests::on_voted, this, _1),[](const boost::system::error_code&){LOG_INFO << "Error requesting append entries.";});
       unique_ptr<append_entries_request> r(new append_entries_request());
       r->set_term(223);
       r->set_leader_id(2);

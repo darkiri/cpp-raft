@@ -2,6 +2,7 @@
 #define RAFT_RPC
 
 #include <memory>
+#include <boost/system/error_code.hpp>
 
 #include "proto/raft.pb.h"
 #include "timeout.h"
@@ -12,7 +13,7 @@ namespace raft {
     typedef std::function<void(const append_entries_response&)> on_appended_handler;
     typedef std::function<std::unique_ptr<vote_response>(const vote_request&)> vote_handler;
     typedef std::function<void(const vote_response&)> on_voted_handler;
-    typedef std::function<void()> error_handler;
+    typedef std::function<void(const boost::system::error_code&)> error_handler;
 
     class tcp {
       public:
