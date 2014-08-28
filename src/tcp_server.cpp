@@ -85,6 +85,7 @@ namespace raft {
 
     void tcp::server::impl::start_accept(){
       auto conn = tcp_connection::create(move(socket_), append_handler_, vote_handler_, error_handler_);
+      // TODO: connection monitoring, kill timed out connections
       connection_pool_.push_back(conn);
       auto handler = bind(&impl::handle_accept, this, conn, _1);
       acceptor_.async_accept(conn->socket(), handler);

@@ -39,7 +39,6 @@ void raft::rpc::write_message_async(tcp_socket& s, const raft_message& request, 
       LOG_TRACE << "Writing completed: " << size << " bytes";
       h();
     } else {
-      LOG_TRACE << "Error writing to socket: " << ec.value() << " - " << ec.message();
       eh(ec);
     }
   };
@@ -64,7 +63,6 @@ void raft::rpc::read_message_async(tcp_socket& s, std::function<void(const raft_
       message.ParseFromArray(payload.get(), size);
       h(message);
     } else {
-      LOG_TRACE << "Error reading from socket: " << ec.value() << " - " << ec.message();
       eh(ec);
     };
   };

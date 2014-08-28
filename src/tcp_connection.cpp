@@ -3,7 +3,6 @@
 #include "tcp_connection.h"
 #include "tcp_util.h"
 #include "logging.h"
-#include <thread>
 
 namespace raft {
   namespace rpc {
@@ -38,14 +37,32 @@ namespace raft {
           LOG_TRACE << "Server - message written:" << response_.discriminator();
           start();
         };
-        write_message_async(socket_, response_, write_handler, error_handler_);
+        write_message_async(socket_, response_, write_handler, bind(&tcp_connection::write_error_handler, this, _1));
       };
-      read_message_async(socket_, handler, error_handler_);
+      read_message_async(socket_, handler, bind(&tcp_connection::read_error_handler, this, _1));
+    }
+
+    void tcp_connection::read_error_handler(const boost::system::error_code& ec) {
+      if (ec == boost::asio::error::operation_aborted) {
+        LOG_WARN << "Read operation aborted. Connection can be disposed.";
+      } else {
+        // TODO: reconnect
+        LOG_ERROR << "Error reading from socket: " << ec.value() << " - " << ec.message();
+      }
+    }
+
+    void tcp_connection::write_error_handler(const boost::system::error_code& ec) {
+      if (ec == boost::asio::error::operation_aborted) {
+        LOG_WARN << "Write operation aborted. Connection can be disposed.";
+      } else {
+        // TODO: reconnect
+        LOG_ERROR << "Error writing to socket: " << ec.value() << " - " << ec.message();
+      }
     }
 
     void tcp_connection::close(){
       boost::system::error_code ignored_ec;
-      socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_receive, ignored_ec);
+      socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ignored_ec);
       socket_.close();
       LOG_INFO << "Server - connection closed";
     }
