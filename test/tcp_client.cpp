@@ -20,7 +20,6 @@ int main() {
   config_server config;
   config.set_id(1);
   config.set_port(7576);
-  timeout t;
   rpc::tcp::client c(config, on_appended, on_voted);
   unique_ptr<append_entries_request> r(new append_entries_request());
   r->set_term(223);

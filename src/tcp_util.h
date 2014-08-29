@@ -14,9 +14,6 @@ namespace raft {
 
     void write_message_async(tcp_socket& s, const raft_message& request, std::function<void()> h, error_handler eh);
     void read_message_async(tcp_socket& s, std::function<void(const raft_message&)> h, error_handler eh);
-
-    std::shared_ptr<boost::asio::deadline_timer> create_deadline(boost::asio::io_service& ios, timeout t, error_handler h);
-    void extend_deadline(std::shared_ptr<boost::asio::deadline_timer> timer, timeout t, error_handler h);
   }
 }
 #endif

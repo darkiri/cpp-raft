@@ -56,7 +56,6 @@ namespace raft {
     }
 
     TEST_F(TcpSmokeTests, AppendEntries) {
-      timeout t;
       config_server conf;
       conf.set_id(1);
       conf.set_port(7574);
@@ -83,7 +82,6 @@ namespace raft {
     }
 
     TEST_F(TcpSmokeTests, RequestVote) {
-      timeout t;
       config_server conf;
       conf.set_id(1);
       conf.set_port(7574);
@@ -108,7 +106,6 @@ namespace raft {
     }
 
     TEST_F(TcpSmokeTests, AppendEntries_AppendEntries) {
-      timeout t;
       config_server conf;
       conf.set_id(1);
       conf.set_port(7574);
@@ -144,7 +141,6 @@ namespace raft {
     }
 
     TEST_F(TcpSmokeTests, AppendEntries_RequestVote) {
-      timeout t;
       config_server conf;
       conf.set_id(1);
       conf.set_port(7574);

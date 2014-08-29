@@ -38,6 +38,7 @@ namespace raft {
             tcp_resolver::query query(config.host(), to_string(config.port()));
             auto iterator = resolver.resolve(query);
 
+            // TODO: timeout for connect?
             connect(socket_, iterator);
             start_read();
           }
@@ -117,6 +118,7 @@ namespace raft {
       if (ec == boost::asio::error::eof) {
         LOG_WARN << "Client - socket closed.";
       } else {
+        // TODO: reconnect
         LOG_ERROR << "Client - Socket error: " << ec.value() << " - " << ec.message();
       }
     }

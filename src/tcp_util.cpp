@@ -70,7 +70,7 @@ void raft::rpc::read_message_async(tcp_socket& s, std::function<void(const raft_
   LOG_TRACE << "Ready to read header: " << TCP_HEADER_LENGTH << " bytes";
   async_read(s, boost::asio::buffer(header.get(), TCP_HEADER_LENGTH), boost::asio::transfer_exactly(TCP_HEADER_LENGTH), header_read_handler);
 }
-
+/*
 std::shared_ptr<boost::asio::deadline_timer> raft::rpc::create_deadline(boost::asio::io_service& ios, timeout t, error_handler h) {
   auto timer = std::shared_ptr<boost::asio::deadline_timer>(new boost::asio::deadline_timer(ios));
   timer->expires_from_now(boost::posix_time::milliseconds(t.get()));
@@ -95,3 +95,4 @@ void raft::rpc::extend_deadline(std::shared_ptr<boost::asio::deadline_timer> tim
     LOG_ERROR << "Timeout already expired";
   }
 }
+*/
