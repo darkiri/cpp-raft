@@ -93,7 +93,7 @@ namespace raft {
 
     void tcp::server::impl::on_connection_error(tcp_connection&, const error_code& ec) {
         // TODO: reconnect
-        LOG_ERROR << "Error reading from socket: " << ec.value() << " - " << ec.message();
+        LOG_ERROR << "Server - Socket error: " << ec.value() << " - " << ec.message();
     }
 
     void tcp::server::impl::handle_accept(shared_ptr<tcp_connection> conn, const error_code& error) {

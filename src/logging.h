@@ -15,7 +15,7 @@ namespace trivial = boost::log::trivial;
 BOOST_LOG_INLINE_GLOBAL_LOGGER_DEFAULT(logger, boost::log::sources::severity_logger<trivial::severity_level>)
 
 #define LOG_TRACE BOOST_LOG_SEV(logger::get(), trivial::trace)
-#define LOG_INFO BOOST_LOG_SEV(logger::get(), trivial::info)
+#define LOG_INFO BOOST_LOG_SEV(logger::get(), trivial::info) << "\t"
 #define LOG_WARN BOOST_LOG_SEV(logger::get(), trivial::warning)
 #define LOG_ERROR BOOST_LOG_SEV(logger::get(), trivial::error)
 #define LOG_FATAL BOOST_LOG_SEV(logger::get(), trivial::fatal)

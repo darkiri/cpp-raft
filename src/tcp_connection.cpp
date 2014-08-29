@@ -37,22 +37,14 @@ namespace raft {
           LOG_TRACE << "Server - message written:" << response_.discriminator();
           start();
         };
-        write_message_async(socket_, response_, write_handler, bind(&tcp_connection::write_error_handler, this, _1));
+        write_message_async(socket_, response_, write_handler, bind(&tcp_connection::on_error, this, _1));
       };
-      read_message_async(socket_, handler, bind(&tcp_connection::read_error_handler, this, _1));
+      read_message_async(socket_, handler, bind(&tcp_connection::on_error, this, _1));
     }
 
-    void tcp_connection::read_error_handler(const boost::system::error_code& ec) {
+    void tcp_connection::on_error(const boost::system::error_code& ec) {
       if (ec == boost::asio::error::operation_aborted) {
-        LOG_WARN << "Read operation aborted. Connection can be disposed.";
-      } else {
-        error_handler_(*this, ec);
-      }
-    }
-
-    void tcp_connection::write_error_handler(const boost::system::error_code& ec) {
-      if (ec == boost::asio::error::operation_aborted) {
-        LOG_WARN << "Write operation aborted. Connection can be disposed.";
+        LOG_WARN << "Socket operation aborted. Connection can be disposed.";
       } else {
         error_handler_(*this, ec);
       }

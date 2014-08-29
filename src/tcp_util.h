@@ -8,6 +8,7 @@ namespace raft {
   namespace rpc {
 
     typedef boost::asio::ip::tcp::socket tcp_socket;
+    typedef std::function<void(const boost::system::error_code&)> error_handler;
 
     const static int TCP_HEADER_LENGTH = 4;
 

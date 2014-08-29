@@ -32,8 +32,7 @@ namespace raft {
           response_() {
             LOG_TRACE << "Server - connection created";
           }
-        void read_error_handler(const boost::system::error_code&);
-        void write_error_handler(const boost::system::error_code&);
+        void on_error(const boost::system::error_code&);
 
         tcp_socket socket_;
         append_handler append_handler_;

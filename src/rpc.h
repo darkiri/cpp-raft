@@ -13,7 +13,6 @@ namespace raft {
     typedef std::function<void(const append_entries_response&)> on_appended_handler;
     typedef std::function<std::unique_ptr<vote_response>(const vote_request&)> vote_handler;
     typedef std::function<void(const vote_response&)> on_voted_handler;
-    typedef std::function<void(const boost::system::error_code&)> error_handler;
 
     class tcp {
       public:
@@ -39,7 +38,7 @@ namespace raft {
         // TODO: timeout for connect?
         class client {
           public:
-            client(const config_server&, on_appended_handler, on_voted_handler, error_handler);
+            client(const config_server&, on_appended_handler, on_voted_handler);
             ~client();
 
             // these two methods may not be called simultaneously

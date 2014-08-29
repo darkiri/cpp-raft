@@ -21,10 +21,9 @@ namespace raft {
 
     struct tcp::client::impl {
       public:
-        impl(const config_server& config, on_appended_handler ah, on_voted_handler vh, error_handler eh) :
+        impl(const config_server& config, on_appended_handler ah, on_voted_handler vh) :
           ah_(ah),
           vh_(vh),
-          eh_(eh),
           ios_(),
           socket_(ios_),
           work_(ios_),
@@ -51,10 +50,10 @@ namespace raft {
       private:
         void start_read();
         void raft_message_handler(raft_message);
+        void on_error(const boost::system::error_code&);
 
         on_appended_handler ah_;
         on_voted_handler vh_;
-        error_handler eh_;
 
         io_service ios_;
         tcp_socket socket_;
@@ -79,7 +78,9 @@ namespace raft {
       m.set_discriminator(raft_message::APPEND_ENTRIES);
       m.set_allocated_append_entries_request(request.release());
 
-      write_message_async(socket_, m, [](){ LOG_TRACE << "Client - AppendEntries message written"; }, eh_);
+      write_message_async(socket_, m, 
+          [](){ LOG_TRACE << "Client - AppendEntries message written"; },
+          bind(&impl::on_error, this, _1));
     }
 
     void tcp::client::impl::request_vote_async(unique_ptr<vote_request> request) {
@@ -88,11 +89,15 @@ namespace raft {
       m.set_discriminator(raft_message::VOTE);
       m.set_allocated_vote_request(request.release());
 
-      write_message_async(socket_, m, [](){ LOG_TRACE << "Client - RequestVote message written"; }, eh_);
+      write_message_async(socket_, m, 
+          [](){ LOG_TRACE << "Client - RequestVote message written"; },
+          bind(&impl::on_error, this, _1));
     }
 
     void tcp::client::impl::start_read(){
-      read_message_async(socket_, std::bind(&impl::raft_message_handler, this, _1), eh_);
+      read_message_async(socket_, 
+          bind(&impl::raft_message_handler, this, _1),
+          bind(&impl::on_error, this, _1));
     }
 
     void tcp::client::impl::raft_message_handler(raft_message m){
@@ -108,8 +113,16 @@ namespace raft {
       start_read();
     }
 
-    tcp::client::client(const config_server& c, on_appended_handler ah, on_voted_handler vh, error_handler eh) :
-      pimpl_(new tcp::client::impl(c, ah, vh, eh)) {} 
+    void tcp::client::impl::on_error(const boost::system::error_code& ec) {
+      if (ec == boost::asio::error::eof) {
+        LOG_WARN << "Client - socket closed.";
+      } else {
+        LOG_ERROR << "Client - Socket error: " << ec.value() << " - " << ec.message();
+      }
+    }
+
+    tcp::client::client(const config_server& c, on_appended_handler ah, on_voted_handler vh) :
+      pimpl_(new impl(c, ah, vh)) {} 
 
     void tcp::client::append_entries_async(unique_ptr<append_entries_request> r) {
       pimpl_->append_entries_async(move(r));

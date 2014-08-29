@@ -15,17 +15,13 @@ void on_voted(const vote_response& r) {
   LOG_INFO << "Vote response: term = " << r.term() << ", granted = " << r.granted();
 }
 
-void on_timeout(const boost::system::error_code&) {
-  LOG_INFO << "An error occured";
-}
-
 int main() {
   init_log();
   config_server config;
   config.set_id(1);
   config.set_port(7576);
   timeout t;
-  rpc::tcp::client c(config, on_appended, on_voted, on_timeout);
+  rpc::tcp::client c(config, on_appended, on_voted);
   unique_ptr<append_entries_request> r(new append_entries_request());
   r->set_term(223);
   r->set_leader_id(2);
