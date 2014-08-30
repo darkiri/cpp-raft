@@ -8,6 +8,7 @@ proto_files = env.Protoc(
     PROTOCOUTDIR = "build/raft/proto",
 )
 raft_o.extend(env.StaticObject([
+    "runner.cpp",
     "node.cpp",
     "log.cpp",
     "tcp_util.cpp",

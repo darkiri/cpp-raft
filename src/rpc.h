@@ -2,8 +2,6 @@
 #define RAFT_RPC
 
 #include <memory>
-#include <boost/system/error_code.hpp>
-
 #include "proto/raft.pb.h"
 
 namespace raft {
