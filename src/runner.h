@@ -11,8 +11,7 @@ namespace raft {
   template<class TLog, class TRpcClient, class TRpcServer>
   class runner {
     public:
-      runner(const config&, timeout&);
-      ~runner();
+      runner(const config& c, timeout& t) : pimpl_(c, t) {};
 
       runner(const runner&) = delete;
       runner& operator=(const runner&) = delete;
@@ -20,7 +19,8 @@ namespace raft {
       void run();
       void stop();
     private:
-      node<TLog> node_;
+      struct impl;
+      std::unique_ptr<impl> pimpl_;
   };
 }
 #endif
