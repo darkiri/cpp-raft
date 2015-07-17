@@ -3,26 +3,37 @@
 
 namespace raft {
   template<class TLog>
-  append_entries_response node<TLog>::append_entries(const append_entries_request& args) {
+  bool node<TLog>::log_matching(const append_entries_request& request) const {
     auto size = log_.size();
     auto logIter = log_.begin();
-    auto prevIndexTerm = size != 0 ? (logIter + args.prev_log_index())->term() : 0;
+    auto prevIndexTerm = request.prev_log_index() < 0
+      ? 0
+      : size < request.prev_log_index() + 1
+        ? -1
+        : (logIter + request.prev_log_index())->term();
 
-    auto success = size != 0 && args.term() >= log_.current_term() &&
-      (size <= 1 || prevIndexTerm == args.prev_log_term());
+    return prevIndexTerm == request.prev_log_term();
+  }
 
-    if (success && args.term() > log_.current_term()){
+  template<class TLog>
+  append_entries_response node<TLog>::append_entries(const append_entries_request& args) {
+
+    auto remote_term_outdated = args.term() < log_.current_term();
+    auto success = !remote_term_outdated && log_matching(args);
+
+    auto current_term_outdated = log_.current_term() < args.term();
+    if (current_term_outdated){
       convert_to_follower();
     }
 
     if (success && args.entries().begin() != args.entries().end()) {
-      if (args.prev_log_index() == size - 1) {
+      if (args.prev_log_index() == log_.size() - 1) {
         std::for_each(
             args.entries().begin(),
             args.entries().end(),
             [this](const log_entry& e) { log_.append(e);});
       } else {
-        auto nodeIter = logIter + args.prev_log_index() + 1;
+        auto nodeIter = log_.begin() + args.prev_log_index() + 1;
         auto masterIter = args.entries().begin();
         while(nodeIter->term() == masterIter->term()) {
           ++nodeIter;

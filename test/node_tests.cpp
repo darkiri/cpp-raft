@@ -89,9 +89,9 @@ namespace raft {
 
   TEST_F(NodeTest, AppendEntries_Returns_True_If_Term_Is_Same_As_CurrentTerm) {
     in_memory_log log;
-    log.append(create_log_entry(2));
+    log.append(create_log_entry(1));
     InMemoryNode node(log);
-    auto args = make_append_args(2, 0, 0);
+    auto args = make_append_args(2, 0, 1);
     auto res = node.append_entries(args);
     EXPECT_TRUE(res.success());
   }
