@@ -18,7 +18,7 @@ namespace raft {
     log.append(create_log_entry(1));
     log.append(create_log_entry(2));
     log.append(create_log_entry(3));
-    log.trim(log.begin() + 1);
+    log.trim(log.begin() + 2);
     EXPECT_EQ(1, (--log.end())->term());
   }
 }

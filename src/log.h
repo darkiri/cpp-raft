@@ -10,9 +10,11 @@ namespace raft {
   typedef std::vector<log_entry>::const_iterator const_iterator;
   class in_memory_log {
       public:
-        in_memory_log() :
-          entries_(),
-          voted_for_() {};
+        in_memory_log() : entries_(), voted_for_(), current_term_(0) {
+          log_entry dummy;
+          dummy.set_term(0);
+          entries_.push_back(dummy);
+        };
 
         const_iterator begin() const{
           return entries_.begin();

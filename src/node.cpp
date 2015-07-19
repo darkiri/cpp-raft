@@ -1,14 +1,14 @@
 #include <algorithm>
 #include "node.h"
+#include "logging.h"
 
 namespace raft {
   template<class TLog>
   bool node<TLog>::log_matching(const append_entries_request& request) const {
     auto size = log_.size();
     auto logIter = log_.begin();
-    auto prevIndexTerm = request.prev_log_index() < 0
-      ? 0
-      : size < request.prev_log_index() + 1
+    
+    auto prevIndexTerm = size < request.prev_log_index()
         ? -1
         : (logIter + request.prev_log_index())->term();
 
@@ -19,7 +19,7 @@ namespace raft {
   append_entries_response node<TLog>::append_entries(const append_entries_request& args) {
 
     auto remote_term_outdated = args.term() < log_.current_term();
-    auto success = !remote_term_outdated && log_matching(args);
+    const auto success = !remote_term_outdated && log_matching(args);
 
     auto current_term_outdated = log_.current_term() < args.term();
     if (current_term_outdated){
@@ -62,9 +62,7 @@ namespace raft {
 
   template<class Iter>
   vote_response node<Iter>::request_vote(const vote_request& args) {
-    auto size = log_.size();
-    auto logIter = log_.begin();
-    auto currentTerm = size != 0 ? (logIter + size -1)->term() : 0;
+    auto currentTerm = log_.current_term();
 
     auto success = args.term() >= currentTerm &&
       (log_.voted_for() == 0 || log_.voted_for() == args.candidate_id()) &&
