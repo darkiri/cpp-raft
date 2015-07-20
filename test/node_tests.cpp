@@ -9,6 +9,38 @@ namespace raft {
 
   typedef node<in_memory_log> InMemoryNode;
 
+  class append_args {
+    public:
+      append_args() : args_() {}
+
+      inline append_args term(unsigned int term) {
+        args_.set_term(term);
+        return *this;
+      }
+
+      append_args prev_log_index(unsigned int index) {
+        args_.set_prev_log_index(index);
+        return *this;
+      }
+
+      append_args prev_log_term(unsigned int term) {
+        args_.set_prev_log_term(term);
+        return *this;
+      }
+
+      append_args commit_index(unsigned int index) {
+        args_.set_leader_commit(index);
+        return *this;
+      }
+
+      append_entries_request get() {
+        return args_;
+      }
+
+    private:
+      append_entries_request args_;
+  };
+
   append_entries_request make_append_args(
       unsigned int term,
       unsigned int prev_log_index,
@@ -63,7 +95,11 @@ namespace raft {
     log.append(create_log_entry(3));
     log.set_current_term(3);
     InMemoryNode node(log);
-    auto args = make_append_args(2, 1, 1);
+    auto args = append_args()
+      .term(2)
+      .prev_log_index(1)
+      .prev_log_term(1)
+      .get();
     auto res = node.append_entries(args);
     EXPECT_EQ(3, res.term());
   }
@@ -74,7 +110,11 @@ namespace raft {
     log.append(create_log_entry(2));
     log.set_current_term(2);
     InMemoryNode node(log);
-    auto args = make_append_args(3, 1, 1);
+    auto args = append_args()
+      .term(3)
+      .prev_log_index(1)
+      .prev_log_term(1)
+      .get();
     auto res = node.append_entries(args);
     EXPECT_EQ(3, res.term());
   }
@@ -82,7 +122,11 @@ namespace raft {
   TEST_F(NodeTest, AppendEntries_Returns_True_For_Empty_Log) {
     in_memory_log log;
     InMemoryNode node(log);
-    auto args = make_append_args(1, 0, 0);
+    auto args = append_args()
+      .term(1)
+      .prev_log_index(0)
+      .prev_log_term(0)
+      .get();
     auto res = node.append_entries(args);
     EXPECT_TRUE(res.success());
   }
@@ -93,7 +137,11 @@ namespace raft {
     log.append(create_log_entry(2));
     log.set_current_term(3);
     InMemoryNode node(log);
-    auto args = make_append_args(2, 1, 1);
+    auto args = append_args()
+      .term(2)
+      .prev_log_index(1)
+      .prev_log_term(1)
+      .get();
     auto res = node.append_entries(args);
     EXPECT_FALSE(res.success());
   }
@@ -103,7 +151,11 @@ namespace raft {
     log.append(create_log_entry(1));
     log.set_current_term(2);
     InMemoryNode node(log);
-    auto args = make_append_args(2, 1, 1);
+    auto args = append_args()
+      .term(2)
+      .prev_log_index(1)
+      .prev_log_term(1)
+      .get();
     auto res = node.append_entries(args);
     EXPECT_TRUE(res.success());
   }
@@ -116,7 +168,11 @@ namespace raft {
     log.append(create_log_entry(3));
     log.set_current_term(3);
     InMemoryNode node(log);
-    auto args = make_append_args(3, 2, 1);
+    auto args = append_args()
+      .term(3)
+      .prev_log_index(2)
+      .prev_log_term(1)
+      .get();
     auto res = node.append_entries(args);
     EXPECT_FALSE(res.success());
   }
@@ -128,7 +184,11 @@ namespace raft {
     log.append(create_log_entry(3));
     log.set_current_term(3);
     InMemoryNode node(log);
-    auto args = make_append_args(5, 10, 4);
+    auto args = append_args()
+      .term(5)
+      .prev_log_index(10)
+      .prev_log_term(4)
+      .get();
     auto res = node.append_entries(args);
     EXPECT_FALSE(res.success());
   }
@@ -138,7 +198,11 @@ namespace raft {
     log.append(create_log_entry(2));
     log.set_current_term(2);
     InMemoryNode node(log);
-    auto args = make_append_args(5, 1, 2);
+    auto args = append_args()
+      .term(5)
+      .prev_log_index(1)
+      .prev_log_term(2)
+      .get();
     auto e = args.add_entries();
     init_log_entry(e, 4);
     auto res = node.append_entries(args);
@@ -156,7 +220,11 @@ namespace raft {
     log.append(create_log_entry(3));
     log.set_current_term(3);
     InMemoryNode node(log);
-    auto args = make_append_args(5, 2, 2);
+    auto args = append_args()
+      .term(5)
+      .prev_log_index(2)
+      .prev_log_term(2)
+      .get();
     auto e = args.add_entries();
     init_log_entry(e, 4);
     e = args.add_entries();
@@ -176,7 +244,11 @@ namespace raft {
     log.append(create_log_entry(2));
     log.set_current_term(2);
     InMemoryNode node(log);
-    auto args = make_append_args(2, 2, 2);
+    auto args = append_args()
+      .term(2)
+      .prev_log_index(2)
+      .prev_log_term(2)
+      .get();
     auto res = node.append_entries(args);
     EXPECT_TRUE(res.success());
     ExpectLogSize(log, 3);
@@ -191,7 +263,12 @@ namespace raft {
     log.append(create_log_entry(2));
     log.set_current_term(2);
     InMemoryNode node(log);
-    auto args = make_append_args(2, 2, 2, 1);
+    auto args = append_args()
+      .term(2)
+      .prev_log_index(2)
+      .prev_log_term(2)
+      .commit_index(1)
+      .get();
     auto res = node.append_entries(args);
     EXPECT_TRUE(res.success());
     EXPECT_EQ(1, node.commit_index());
@@ -287,7 +364,11 @@ namespace raft {
     log.append(create_log_entry(2));
     InMemoryNode node(log);
     node.start_election();
-    auto args = make_append_args(4, 1, 2);
+    auto args = append_args()
+      .term(4)
+      .prev_log_index(1)
+      .prev_log_term(2)
+      .get();
     auto res = node.append_entries(args);
     EXPECT_TRUE(res.success());
     EXPECT_EQ(node_state::FOLLOWER, node.state());
@@ -298,7 +379,11 @@ namespace raft {
     log.append(create_log_entry(2));
     log.set_current_term(2);
     InMemoryNode node(log);
-    auto args = make_append_args(3, 1, 2);
+    auto args = append_args()
+      .term(3)
+      .prev_log_index(1)
+      .prev_log_term(2)
+      .get();
     auto res = node.append_entries(args);
     EXPECT_TRUE(res.success());
     EXPECT_EQ(3, log.current_term());
