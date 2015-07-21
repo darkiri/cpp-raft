@@ -31,6 +31,12 @@ namespace raft {
         return *this;
       }
 
+      append_args& log_entry(unsigned int entryTerm) {
+        auto entry = args_.add_entries();
+        entry->set_term(entryTerm);
+        return *this;
+      }
+
       append_entries_request get() const {
         return args_;
       }
@@ -39,5 +45,28 @@ namespace raft {
       append_entries_request args_;
   };
 
+  class vote_args {
+    public:
+      vote_args(unsigned int term) : args_() {
+        args_.set_term(term);
+      }
+
+      vote_args& candidate(unsigned int id) {
+        args_.set_candidate_id(id);
+        return *this;
+      }
+
+      vote_args& last_index_term(unsigned int lastIndex, unsigned int lastTerm) {
+        args_.set_last_log_index(lastIndex);
+        args_.set_last_log_term(lastTerm);
+        return *this;
+      }
+
+      vote_request get() const {
+        return args_;
+      }
+    private:
+      vote_request args_;
+  };
 }
 #endif
