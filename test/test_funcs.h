@@ -10,9 +10,22 @@ namespace raft {
     l.set_term(term);
     return l;
   }
-  inline void init_log_entry(log_entry* l, unsigned int term) {
-    l->set_term(term);
-  }
+
+  class init_log{
+    public:
+      init_log(in_memory_log& log, unsigned int currentTerm) : log_(log) {
+        log_.set_current_term(currentTerm);
+      }
+
+      init_log& entry(unsigned int entryTerm) {
+        log_entry e;
+        e.set_term(entryTerm);
+        log_.append(e);
+        return *this;
+      }
+    private:
+      in_memory_log& log_;
+  };
 
   class append_args {
     public:
