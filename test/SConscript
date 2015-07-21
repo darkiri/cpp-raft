@@ -20,6 +20,12 @@ env.Program("test",
             ] + raft_o), 
         LIBS = ["pthread", "protobuf", "boost_system", "boost_log", "boost_thread"],
         LIBPATH = ["#build/raft"],
+        CXXFLAGS = [
+            "-std=c++11",
+            "-Wall",
+            "-Wextra",
+            "-Wno-sign-compare",
+            ],
         CPPPATH = ["#gtest/include", "#src", "#build/raft"])
 
 env.Program("tcp_server", 
