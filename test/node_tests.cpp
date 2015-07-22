@@ -186,14 +186,14 @@ namespace raft {
   TEST_F(NodeTest, RequestVote_Returns_False_If_Already_VotedFor_Another_Candiate) {
     in_memory_log log;
     init_log(log, 2).entry(2);
-    auto args = vote_args(1).candidate(1).last_index_term(1, 1).get();
+    auto args = vote_args(2).candidate(1).last_index_term(1, 2).get();
 
     InMemoryNode node(log);
     auto res = node.request_vote(args);
 
     EXPECT_TRUE(res.granted());
 
-    args = vote_args(2).candidate(2).last_index_term(1, 2).get();
+    args = vote_args(3).candidate(2).last_index_term(1, 3).get();
     res = node.request_vote(args);
 
     EXPECT_FALSE(res.granted());
