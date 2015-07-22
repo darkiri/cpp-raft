@@ -12,6 +12,8 @@ env.Program("test",
         source = ([
             "test_runner.cpp",
             "node_tests.cpp",
+            "append_entries_tests.cpp",
+            "request_vote_tests.cpp",
             "log_tests.cpp",
             "tcp_smoke_tests.cpp",
             "tcp_timeout_tests.cpp",
