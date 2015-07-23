@@ -101,14 +101,73 @@ namespace raft {
     ExpectLogTerm(2, 2);
   }
 
-  TEST_F(NodeTest, AppendEntries_Updates_CommitIndex) {
-    init_log(*plog_, 2).entry(1).entry(2).entry(2);
-    auto args = append_args(2).prev_index_term(2, 2).commit_index(1).get();
+
+  TEST_F(NodeTest, AppendEntries_KeepAlive_Updates_CurrentTerm) {
+    init_log(*plog_, 2).entry(1).entry(2);
+    auto args = append_args(3).prev_index_term(2, 2).get();
 
     auto res = pnode_->append_entries(args);
 
-    EXPECT_TRUE(res.success());
-    EXPECT_EQ(1, pnode_->commit_index());
+    EXPECT_EQ(3, plog_->current_term());
+  }
+
+  TEST_F(NodeTest, AppendEntries_Updates_CurrentTerm) {
+    init_log(*plog_, 2).entry(2);
+    auto args = append_args(3).prev_index_term(1, 2).log_entry(3).get();
+
+    pnode_->append_entries(args);
+
+    EXPECT_EQ(3, plog_->current_term());
+  }
+
+  TEST_F(NodeTest, AppendEntries_LogsNotMatching_DoNotUpdate_CommitIndex) {
+    init_log(*plog_, 1).entry(1);
+    auto args = append_args(1).prev_index_term(1, 2)
+      .log_entry(1).log_entry(1)
+      .commit_index(2).get();
+
+    pnode_->append_entries(args);
+
+    EXPECT_EQ(0, pnode_->commit_index());
+  }
+
+  TEST_F(NodeTest, AppendEntries_Set_CommitIndex_To_LeaderCommiIndex) {
+    init_log(*plog_, 1).entry(1);
+    auto args = append_args(1).prev_index_term(1, 1)
+      .log_entry(1).log_entry(1)
+      .commit_index(2).get();
+
+    pnode_->append_entries(args);
+
+    EXPECT_EQ(2, pnode_->commit_index());
+  }
+
+  TEST_F(NodeTest, AppendEntries_Set_CommitIndex_To_LastNewEntryIndex) {
+    init_log(*plog_, 1).entry(1);
+    auto args = append_args(1).prev_index_term(1, 1)
+      .log_entry(1)
+      .commit_index(3).get();
+
+    pnode_->append_entries(args);
+
+    EXPECT_EQ(2, pnode_->commit_index());
+  }
+
+  TEST_F(NodeTest, AppendEntries_LeaderCommitLower_CommitIndexNotChanged) {
+    init_log(*plog_, 1).entry(1);
+    auto args = append_args(1).prev_index_term(1, 1)
+      .log_entry(1).log_entry(1)
+      .commit_index(3).get();
+
+    pnode_->append_entries(args);
+
+    args = append_args(1).prev_index_term(1, 1)
+      .log_entry(1)
+      .commit_index(2).get();
+
+    pnode_->append_entries(args);
+
+    EXPECT_EQ(3, pnode_->commit_index());
   }
 
   TEST_F(NodeTest, AppendEntries_FromNewLeader_ConvertToFollower) {

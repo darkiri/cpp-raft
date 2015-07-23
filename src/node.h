@@ -36,8 +36,8 @@ namespace raft {
 
       inline bool is_log_uptodate(unsigned int index, unsigned int term) const;
       inline bool log_matching(const append_entries_request& request) const;
-      inline void increment_current_term(unsigned int newTerm);
       inline void convert_to_follower();
+      inline void do_append_entries(const append_entries_request& args);
 
       node_state state_;
       unsigned int commit_index_;
