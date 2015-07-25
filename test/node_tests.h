@@ -7,15 +7,17 @@
 using namespace std;
 
 namespace raft {
-  typedef node<in_memory_log> InMemoryNode;
+  typedef node<in_memory_log, state_machine> InMemoryNode;
 
   class NodeTest : public ::testing::Test {
     protected:
       NodeTest() :
         plog_(new in_memory_log()),
-        pnode_(new InMemoryNode(*plog_)) {}
+        pstate_machine_(new state_machine()),
+        pnode_(new InMemoryNode(*plog_, *pstate_machine_)) {}
 
       std::unique_ptr<in_memory_log> plog_;
+      std::unique_ptr<state_machine> pstate_machine_;
       std::unique_ptr<InMemoryNode> pnode_;
 
       void ExpectLogTerm(int index, int expectedTerm) {

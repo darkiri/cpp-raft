@@ -2,6 +2,7 @@
 #define RAFT_NODE
 
 #include "log.h"
+#include "state_machine.h"
 #include "proto/raft.pb.h"
 
 namespace raft {
@@ -12,20 +13,28 @@ namespace raft {
   };
 
   // this class is per design not thread safe
-  template<class TLog>
+  template<class TLog, class TStateMachine>
   class node {
     public:
-      node(TLog& log):
+      node(TLog& log, TStateMachine& state_machine):
         state_(node_state::FOLLOWER),
         commit_index_(0),
-        log_(log) { };
+        last_applied_(0),
+        log_(log),
+        state_machine_(state_machine) { };
 
       node_state state() const {
         return state_;
       };
+
       unsigned int commit_index() const {
         return commit_index_;
       };
+
+      unsigned int last_applied() const {
+        return last_applied_;
+      };
+
       append_entries_response append_entries(const append_entries_request& args);
       vote_response request_vote(const vote_request& args);
 
@@ -42,8 +51,9 @@ namespace raft {
 
       node_state state_;
       unsigned int commit_index_;
-      // TODO currentTerm?
+      unsigned int last_applied_;
       TLog& log_;
+      TStateMachine state_machine_;
   };
 }
 #endif

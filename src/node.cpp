@@ -3,8 +3,8 @@
 #include "logging.h"
 
 namespace raft {
-  template<class TLog>
-  bool node<TLog>::log_matching(const append_entries_request& request) const {
+  template<class TLog, class TStateMachine>
+  bool node<TLog, TStateMachine>::log_matching(const append_entries_request& request) const {
     auto size = log_.size();
     auto logIter = log_.begin();
     
@@ -15,16 +15,16 @@ namespace raft {
     return prevIndexTerm == request.prev_log_term();
   }
 
-  template<class Iter>
-  bool node<Iter>::is_log_uptodate(unsigned int index, unsigned int term) const {
+  template<class TLog, class TStateMachine>
+  bool node<TLog, TStateMachine>::is_log_uptodate(unsigned int index, unsigned int term) const {
     //TODO replace with log_matching
     auto entry = *(--log_.end());
     return (log_.size() == index + 1 && entry.term() == term);
   }
 
 
-  template<class TLog>
-  append_entries_response node<TLog>::append_entries(const append_entries_request& args) {
+  template<class TLog, class TStateMachine>
+  append_entries_response node<TLog, TStateMachine>::append_entries(const append_entries_request& args) {
 
     this->ensure_current_term(args.term());
 
@@ -45,8 +45,8 @@ namespace raft {
     return response;
   }
 
-  template<class Iter>
-  void node<Iter>::do_append_entries(const append_entries_request& args) {
+  template<class TLog, class TStateMachine>
+  void node<TLog, TStateMachine>::do_append_entries(const append_entries_request& args) {
     if (args.entries().begin() != args.entries().end()) {
       if (args.prev_log_index() == log_.size() - 1) {
         std::for_each(
@@ -69,8 +69,8 @@ namespace raft {
     }
   }
 
-  template<class Iter>
-  vote_response node<Iter>::request_vote(const vote_request& args) {
+  template<class TLog, class TStateMachine>
+  vote_response node<TLog, TStateMachine>::request_vote(const vote_request& args) {
 
     this->ensure_current_term(args.term());
 
@@ -90,23 +90,24 @@ namespace raft {
     return response;
   }
 
-  template<class Iter>
-  void node<Iter>::ensure_current_term(unsigned int term) {
+  template<class TLog, class TStateMachine>
+  void node<TLog, TStateMachine>::ensure_current_term(unsigned int term) {
     if (term > log_.current_term()){
       log_.set_current_term(term);
       this->convert_to_follower();
     }
   }
 
-  template<class Iter>
-  void node<Iter>::start_election(){
+  template<class TLog, class TStateMachine>
+  void node<TLog, TStateMachine>::start_election(){
     state_ = node_state::CANDIDATE;
     log_.set_current_term(log_.current_term() + 1);
   }
 
-  template<class Iter>
-  void node<Iter>::convert_to_follower(){
+  template<class TLog, class TStateMachine>
+  void node<TLog, TStateMachine>::convert_to_follower(){
     state_ = node_state::FOLLOWER;
   }
-  template class node<in_memory_log>;
+
+  template class node<in_memory_log, state_machine>;
 }
