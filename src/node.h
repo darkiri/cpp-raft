@@ -38,6 +38,7 @@ namespace raft {
       inline bool log_matching(const append_entries_request& request) const;
       inline void convert_to_follower();
       inline void do_append_entries(const append_entries_request& args);
+      inline void ensure_current_term(unsigned int term);
 
       node_state state_;
       unsigned int commit_index_;

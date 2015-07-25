@@ -26,14 +26,10 @@ namespace raft {
   template<class TLog>
   append_entries_response node<TLog>::append_entries(const append_entries_request& args) {
 
+    this->ensure_current_term(args.term());
+
     auto remote_term_outdated = args.term() < log_.current_term();
     const auto success = !remote_term_outdated && this->log_matching(args);
-
-    auto current_term_outdated = log_.current_term() < args.term();
-    if (current_term_outdated){
-      log_.set_current_term(args.term());
-      this->convert_to_follower();
-    }
 
     if (success) {
       this->do_append_entries(args);
@@ -75,22 +71,31 @@ namespace raft {
 
   template<class Iter>
   vote_response node<Iter>::request_vote(const vote_request& args) {
+
+    this->ensure_current_term(args.term());
+
     auto currentTerm = log_.current_term();
 
-    auto success = args.term() >= currentTerm &&
+    auto granted = args.term() >= currentTerm &&
       (log_.voted_for() == 0 || log_.voted_for() == args.candidate_id()) &&
       is_log_uptodate(args.last_log_index(), args.last_log_term());
-    if (success) {
+
+    if (granted) {
       log_.set_voted_for(args.candidate_id());
     }
-    if (args.term() > currentTerm) {
-      convert_to_follower();
-      log_.set_current_term(args.term());
-    }
+
     vote_response response;
     response.set_term(currentTerm);
-    response.set_granted(success);
+    response.set_granted(granted);
     return response;
+  }
+
+  template<class Iter>
+  void node<Iter>::ensure_current_term(unsigned int term) {
+    if (term > log_.current_term()){
+      log_.set_current_term(term);
+      this->convert_to_follower();
+    }
   }
 
   template<class Iter>
