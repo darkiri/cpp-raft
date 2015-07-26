@@ -16,12 +16,12 @@ namespace raft {
   template<class TLog, class TStateMachine>
   class node {
     public:
-      node(TLog& log, TStateMachine& state_machine):
+      node(std::shared_ptr<TLog> plog, std::shared_ptr<TStateMachine> pstate_machine):
         state_(node_state::FOLLOWER),
         commit_index_(0),
         last_applied_(0),
-        log_(log),
-        state_machine_(state_machine) { };
+        plog_(plog),
+        pstate_machine_(pstate_machine) { };
 
       node_state state() const {
         return state_;
@@ -52,8 +52,8 @@ namespace raft {
       node_state state_;
       unsigned int commit_index_;
       unsigned int last_applied_;
-      TLog& log_;
-      TStateMachine state_machine_;
+      std::shared_ptr<TLog> plog_;
+      std::shared_ptr<TStateMachine> pstate_machine_;
   };
 }
 #endif

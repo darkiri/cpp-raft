@@ -14,10 +14,10 @@ namespace raft {
       NodeTest() :
         plog_(new in_memory_log()),
         pstate_machine_(new state_machine()),
-        pnode_(new InMemoryNode(*plog_, *pstate_machine_)) {}
+        pnode_(new InMemoryNode(plog_, pstate_machine_)) {}
 
-      std::unique_ptr<in_memory_log> plog_;
-      std::unique_ptr<state_machine> pstate_machine_;
+      std::shared_ptr<in_memory_log> plog_;
+      std::shared_ptr<state_machine> pstate_machine_;
       std::unique_ptr<InMemoryNode> pnode_;
 
       void ExpectLogTerm(int index, int expectedTerm) {
