@@ -7,7 +7,7 @@ namespace raft {
   bool node<TLog, TStateMachine>::log_matching(const append_entries_request& request) const {
     auto size = plog_->size();
     auto logIter = plog_->begin();
-    
+
     auto prevIndexTerm = size < request.prev_log_index()
         ? -1
         : (logIter + request.prev_log_index())->term();

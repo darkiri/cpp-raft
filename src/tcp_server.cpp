@@ -19,7 +19,7 @@ namespace raft {
 
     struct tcp::server::impl {
       public:
-        impl(const config_server& c, append_handler ah, vote_handler vh) : 
+        impl(const config_server& c, append_handler ah, vote_handler vh) :
           config_(c),
           append_handler_(ah),
           vote_handler_(vh),
@@ -62,7 +62,7 @@ namespace raft {
       for (size_t i = 0; i < THREAD_POOL_SIZE; i++) {
         thread_pool_[i] = shared_ptr<thread>(
             new thread([this](){
-              try { ios_.run(); } 
+              try { ios_.run(); }
               catch (const system_error& e) {
               LOG_ERROR << "Exception in the Server infrastructure. The server is dead. Details: " << e.what();
             }}));
@@ -107,7 +107,7 @@ namespace raft {
     }
 
     tcp::server::server(const config_server& c, append_handler ah, vote_handler vh) :
-      pimpl_(new tcp::server::impl(c, ah, vh)) {} 
+      pimpl_(new tcp::server::impl(c, ah, vh)) {}
 
     void tcp::server::run() {
       pimpl_->run();

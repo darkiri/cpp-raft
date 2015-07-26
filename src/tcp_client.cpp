@@ -27,7 +27,7 @@ namespace raft {
           ios_(),
           socket_(ios_),
           work_(ios_),
-          threads_() { 
+          threads_() {
             for (size_t i = 0; i < threads_.size(); i++) {
               threads_[i] = shared_ptr<thread>(
                   new thread([this](){ ios_.run();}));
@@ -79,7 +79,7 @@ namespace raft {
       m.set_discriminator(raft_message::APPEND_ENTRIES);
       m.set_allocated_append_entries_request(request.release());
 
-      write_message_async(socket_, m, 
+      write_message_async(socket_, m,
           [](){ LOG_TRACE << "Client - AppendEntries message written"; },
           bind(&impl::on_error, this, _1));
     }
@@ -90,13 +90,13 @@ namespace raft {
       m.set_discriminator(raft_message::VOTE);
       m.set_allocated_vote_request(request.release());
 
-      write_message_async(socket_, m, 
+      write_message_async(socket_, m,
           [](){ LOG_TRACE << "Client - RequestVote message written"; },
           bind(&impl::on_error, this, _1));
     }
 
     void tcp::client::impl::start_read(){
-      read_message_async(socket_, 
+      read_message_async(socket_,
           bind(&impl::raft_message_handler, this, _1),
           bind(&impl::on_error, this, _1));
     }
@@ -122,7 +122,7 @@ namespace raft {
     }
 
     tcp::client::client(const config_server& c, on_appended_handler ah, on_voted_handler vh) :
-      pimpl_(new impl(c, ah, vh)) {} 
+      pimpl_(new impl(c, ah, vh)) {}
 
     void tcp::client::append_entries_async(unique_ptr<append_entries_request> r) {
       pimpl_->append_entries_async(move(r));

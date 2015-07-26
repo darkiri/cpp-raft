@@ -16,7 +16,7 @@ namespace raft {
       public:
         class server {
           public:
-            server(const config_server& c, append_handler, vote_handler); 
+            server(const config_server& c, append_handler, vote_handler);
             ~server();
 
             void run();
