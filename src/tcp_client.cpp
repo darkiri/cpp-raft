@@ -103,13 +103,11 @@ namespace raft {
 
     void tcp::client::impl::raft_message_handler(raft_message m){
       LOG_TRACE << "Client - message read:" << m.discriminator();
-      switch(m.discriminator()) {
-        case raft_message::APPEND_ENTRIES: {
-          ah_(m.append_entries_response()); break;
-        }
-        case raft_message::VOTE: {
-          vh_(m.vote_response()); break;
-        }
+      if(m.discriminator() & raft_message::APPEND_ENTRIES) {
+        ah_(m.append_entries_response());
+      }
+      if(m.discriminator() & raft_message::VOTE) {
+        vh_(m.vote_response());
       }
       start_read();
     }

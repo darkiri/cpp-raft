@@ -13,12 +13,13 @@ namespace raft {
 
     class TcpSmokeTests : public ::testing::Test {
       protected:
-        TcpSmokeTests() : append_response_(), vote_response_() {}
+        TcpSmokeTests() : message_received_(raft_message::NONE), append_response_(), vote_response_() {}
         virtual ~TcpSmokeTests() {}
 
       public:
         void on_appended(const append_entries_response& r);
         void on_voted(const vote_response& r);
+        raft_message_type message_received_;
         append_entries_response append_response_;
         vote_response vote_response_;
         condition_variable processed_;
@@ -45,12 +46,14 @@ namespace raft {
 
     void TcpSmokeTests::on_appended(const append_entries_response& r) {
       LOG_INFO << "Append Response: term = " << r.term() << ", success = " << r.success();
+      message_received_ = raft_message::APPEND_ENTRIES;
       append_response_ = r;
       processed_.notify_one();
     }
 
     void TcpSmokeTests::on_voted(const vote_response& r) {
       LOG_INFO << "Vote Response: term = " << r.term() << ", granted = " << r.granted();
+      message_received_ = raft_message::VOTE;
       vote_response_ = r;
       processed_.notify_one();
     }
@@ -76,6 +79,7 @@ namespace raft {
       unique_lock<mutex> lck(mtx);
       processed_.wait_for(lck, std::chrono::seconds(1));
 
+      EXPECT_EQ(raft_message::APPEND_ENTRIES, message_received_);
       EXPECT_EQ(append_response_.term(), 2);
       EXPECT_TRUE(append_response_.success());
       s.stop();
@@ -100,6 +104,7 @@ namespace raft {
       unique_lock<mutex> lck(mtx);
       processed_.wait_for(lck, chrono::seconds(1));
 
+      EXPECT_EQ(raft_message::VOTE, message_received_);
       EXPECT_EQ(vote_response_.term(), 5);
       EXPECT_TRUE(vote_response_.granted());
       s.stop();
