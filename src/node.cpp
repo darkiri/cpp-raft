@@ -71,12 +71,13 @@ namespace raft {
 
   template<class TLog, class TStateMachine>
   vote_response node<TLog, TStateMachine>::request_vote(const vote_request& args) {
+    //TODO check election timouts to be differently seeded
 
     this->ensure_current_term(args.term());
 
     auto currentTerm = plog_->current_term();
 
-    auto granted = args.term() >= currentTerm &&
+    auto granted = args.term() >= currentTerm &&  // TODO ensure remote outdated same as in line 31
       (plog_->voted_for() == 0 || plog_->voted_for() == args.candidate_id()) &&
       is_log_uptodate(args.last_log_index(), args.last_log_term());
 
