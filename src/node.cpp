@@ -15,14 +15,12 @@ namespace raft {
     return prevIndexTerm == request.prev_log_term();
   }
 
-
   template<class TLog, class TStateMachine>
   append_entries_response node<TLog, TStateMachine>::append_entries(const append_entries_request& args) {
 
     this->ensure_current_term(args.term());
 
-    auto remote_term_outdated = args.term() < plog_->current_term();
-    const auto success = !remote_term_outdated && this->log_matching(args);
+    const auto success = this->term_uptodate(args.term()) && this->log_matching(args);
 
     if (success) {
       this->do_append_entries(args);
@@ -71,18 +69,16 @@ namespace raft {
 
     this->ensure_current_term(args.term());
 
-    auto currentTerm = plog_->current_term();
-
-    auto granted = args.term() >= currentTerm &&  // TODO ensure remote outdated same as in line 31
+    auto granted = this->term_uptodate(args.term()) &&
       (plog_->voted_for() == 0 || plog_->voted_for() == args.candidate_id()) &&
-      is_log_uptodate(args);
+      this->is_log_uptodate(args);
 
     if (granted) {
       plog_->set_voted_for(args.candidate_id());
     }
 
     vote_response response;
-    response.set_term(currentTerm);
+    response.set_term(plog_->current_term());
     response.set_granted(granted);
     return response;
   }

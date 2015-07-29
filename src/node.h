@@ -44,6 +44,10 @@ namespace raft {
         node& operator=(const node&);
 
         inline bool is_log_uptodate(const vote_request& request) const;
+        inline bool term_uptodate(unsigned int term) {
+          return term >= plog_->current_term();
+        }
+
         inline bool log_matching(const append_entries_request& request) const;
         inline void convert_to_follower(){
           state_ = node_state::FOLLOWER;
