@@ -36,6 +36,9 @@ namespace raft {
 
       if (args.leader_commit() > commit_index_) {
         commit_index_ = std::min((unsigned int)args.leader_commit(), plog_->size()-1);
+        while (commit_index_ > last_applied_) {
+          pstate_machine_->apply(*(plog_->begin() + ++last_applied_));
+        }
       }
     }
 

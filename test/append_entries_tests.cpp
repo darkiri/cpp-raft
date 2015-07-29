@@ -142,6 +142,31 @@ namespace raft {
     EXPECT_EQ(2, pnode_->commit_index());
   }
 
+  TEST_F(NodeTest, AppendEntries_CommitIndexChanged_ApplyToStateMachine) {
+    init_log(*plog_, 1).entry(1);
+    auto args = append_args(2).prev_index_term(1, 1)
+      .log_entry(2).log_entry(2)
+      .commit_index(1).get();
+
+    EXPECT_EQ(nullptr, pstate_machine_->last_applied());
+
+    pnode_->append_entries(args);
+
+    EXPECT_EQ(1, pstate_machine_->last_applied()->term());
+  }
+
+  TEST_F(NodeTest, AppendEntries_CommitIndexChanged_ApplySeveralEntriesToStateMachine) {
+    init_log(*plog_, 1).entry(1);
+    auto args = append_args(2).prev_index_term(1, 1)
+      .log_entry(2)
+      .commit_index(2).get();
+
+    pnode_->append_entries(args);
+
+    EXPECT_EQ(1, pstate_machine_->first_applied()->term());
+    EXPECT_EQ(2, pstate_machine_->last_applied()->term());
+  }
+
   TEST_F(NodeTest, AppendEntries_Set_CommitIndex_To_LastNewEntryIndex) {
     init_log(*plog_, 1).entry(1);
     auto args = append_args(1).prev_index_term(1, 1)
