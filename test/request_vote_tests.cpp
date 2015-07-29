@@ -33,8 +33,35 @@ namespace raft {
     EXPECT_FALSE(res.granted());
   }
 
-  TEST_F(NodeTest, RequestVote_Returns_False_If_CandidatesLog_Is_Not_UpToDate) {
-    init_log(*plog_, 2).entry(1).entry(2).entry(2);
+  TEST_F(NodeTest, RequestVote_CandidatesLogWithLaterTerm_Is_UpToDate) {
+    init_log(*plog_, 3).entry(1).entry(2).entry(2);
+    auto args = vote_args(3).candidate(1).last_index_term(1, 3).get();
+
+    auto res = pnode_->request_vote(args);
+
+    EXPECT_TRUE(res.granted());
+  }
+
+  TEST_F(NodeTest, RequestVote_CandidatesLogWithEarlierTerm_Is_Not_UpToDate) {
+    init_log(*plog_, 2).entry(2);
+    auto args = vote_args(2).candidate(1).last_index_term(2, 1).get();
+
+    auto res = pnode_->request_vote(args);
+
+    EXPECT_FALSE(res.granted());
+  }
+
+  TEST_F(NodeTest, RequestVote_CandidatesLogSameTermLonger_Is_UpToDate) {
+    init_log(*plog_, 2).entry(1);
+    auto args = vote_args(2).candidate(1).last_index_term(2, 1).get();
+
+    auto res = pnode_->request_vote(args);
+
+    EXPECT_TRUE(res.granted());
+  }
+
+  TEST_F(NodeTest, RequestVote_CandidatesLogSameTermShorter_Is_Not_UpToDate) {
+    init_log(*plog_, 2).entry(1).entry(1);
     auto args = vote_args(2).candidate(1).last_index_term(1, 1).get();
 
     auto res = pnode_->request_vote(args);

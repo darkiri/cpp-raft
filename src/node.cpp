@@ -15,13 +15,6 @@ namespace raft {
     return prevIndexTerm == request.prev_log_term();
   }
 
-  template<class TLog, class TStateMachine>
-  bool node<TLog, TStateMachine>::is_log_uptodate(unsigned int index, unsigned int term) const {
-    //TODO replace with log_matching
-    auto entry = *(--plog_->end());
-    return (plog_->size() == index + 1 && entry.term() == term);
-  }
-
 
   template<class TLog, class TStateMachine>
   append_entries_response node<TLog, TStateMachine>::append_entries(const append_entries_request& args) {
@@ -82,7 +75,7 @@ namespace raft {
 
     auto granted = args.term() >= currentTerm &&  // TODO ensure remote outdated same as in line 31
       (plog_->voted_for() == 0 || plog_->voted_for() == args.candidate_id()) &&
-      is_log_uptodate(args.last_log_index(), args.last_log_term());
+      is_log_uptodate(args);
 
     if (granted) {
       plog_->set_voted_for(args.candidate_id());
@@ -95,22 +88,23 @@ namespace raft {
   }
 
   template<class TLog, class TStateMachine>
-  void node<TLog, TStateMachine>::ensure_current_term(unsigned int term) {
-    if (term > plog_->current_term()){
-      plog_->set_current_term(term);
-      this->convert_to_follower();
-    }
+  bool node<TLog, TStateMachine>::is_log_uptodate(const vote_request& request) const {
+    auto candidateIndex = request.last_log_index();
+    auto candidateTerm = request.last_log_term();
+
+    auto size = plog_->size();
+    auto lastEntry = *(--plog_->end());
+    auto lastTerm = lastEntry.term();
+
+    return candidateTerm != lastTerm
+      ? candidateTerm > lastTerm
+      : candidateIndex >= size-1;
   }
 
   template<class TLog, class TStateMachine>
   void node<TLog, TStateMachine>::start_election(){
     state_ = node_state::CANDIDATE;
     plog_->set_current_term(plog_->current_term() + 1);
-  }
-
-  template<class TLog, class TStateMachine>
-  void node<TLog, TStateMachine>::convert_to_follower(){
-    state_ = node_state::FOLLOWER;
   }
 
   template class node<in_memory_log, state_machine>;
